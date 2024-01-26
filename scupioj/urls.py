@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
+from course.views import CourseView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +26,6 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view()),
     path('home/user/', UserView.as_view()),
     path('home/user/<int:username>/', UserView.as_view()), 
+    path('home/course/', CourseView.as_view())
 
 ]
