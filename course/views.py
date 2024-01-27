@@ -20,6 +20,17 @@ from django.contrib.auth.hashers import make_password
 class CourseSerializer(serializers.Serializer):
     course_name = serializers.CharField(required = True, max_length=100)
     students_list = serializers.ListField(child = serializers.CharField(max_length = 20))
+#序列化器还有预留位
+
+class GroupSerializer(serializers.Serializer):
+    course_name = serializers.CharField(source='name', max_length=100)
+#序列化器还有预留位  
+
+class UserSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
+        fields = ['username', 'first_name']
     
 class CourseView(APIView):
     
@@ -35,7 +46,7 @@ class CourseView(APIView):
                 course_name = course['course_name']
                 students_list = course['students_list']
                 
-                if course_name == 'teacher' or course_name == 'student' or course_name == 'administrator':
+                if Group.objects.filter(name=course_name).exists():
                     return Response({"error": "Invalid course name"}, status=status.HTTP_400_BAD_REQUEST)
                 new_course, created = Group.objects.get_or_create(name=course_name)
                 for student in students_list:
@@ -62,13 +73,91 @@ class CourseView(APIView):
                 try:   
                     course = Group.objects.get(name=course_name)
                     course.delete()
-                    return HttpResponse({"success": "Group deleted successfully"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"success": "Group deleted successfully"}, status=status.HTTP_200_OK)
                 except Group.DoesNotExist:
-                    return HttpResponse({"error": "Group not found"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Group not found"}, status=status.HTTP_400_BAD_REQUEST)
             
             return Response({"error": "course name error"}, status=status.HTTP_400_BAD_REQUEST)     
                        
         else:
-            return Response({"error": "You don't have permission to delete course"}, status=status.HTTP_403_FORBIDDEN)    
-           
+            return Response({"error": "You don't have permission to delete course"}, status=status.HTTP_403_FORBIDDEN)
+            
+    def put(self, request, *args, **kwargs):
+        this_user = User.objects.filter(username=request.session.get('username')).first()
+        if this_user.groups.filter(name="administrator").exists():
+            #只有管理员能编辑班级成员
+            serializer = CourseSerializer(data=request.data)
+            if serializer.is_valid():
+                try:
+                    course = serializer.validated_data
+                    course_name = kwargs.get('coursename')
+                    students_list = course['students_list']
+                    
+                    if not Group.objects.filter(name=course_name).exists():
+                        return Response({"error": "Invalid course not exist"}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    course = Group.objects.get(name=course_name)
+                    old_student = course.user_set.values_list('username', flat=True)
+                    
+                    students_to_add = list(set(students_list) - set(old_student))
+                    students_to_delete = list(set(old_student) - set(students_list))
+                    
+                    print("add:",students_to_add)
+                    print("delete:",students_to_delete)
+                    
+                    for student in students_to_add:
+                        if not User.objects.filter(username = student):
+                            return Response({"success": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                    for student in students_to_add:
+                        user = User.objects.get(username = str(student))
+                        course.user_set.add(user)
+                            
+                    for student in students_to_delete:
+                        print(student)
+                        user = User.objects.get(username = str(student))
+                        course.user_set.remove(user)
+                        
+                    return Response({"success": "Group update successfully"}, status=status.HTTP_200_OK)    
+                except:
+                    return Response({"error": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+        else:
+            return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)       
     
+    def get(self, request, *args, **kwargs):
+        course_name = kwargs.get('coursename')
+        if course_name is not None:
+            this_user = User.objects.get(username=request.session.get('username'))
+            try:
+                course = Group.objects.get(name = course_name)
+            except: 
+                return Response({"error": "course not exist"}, status=status.HTTP_400_BAD_REQUEST)       
+            if course is None or (not this_user.groups.filter(name=course_name).exists() and request.session.get('role') != 'administrator'):
+                #课程不存在或（用户不在课程中且用户不是管理员）
+                return Response({"error": "You don't have permission to visit this course"}, status=status.HTTP_403_FORBIDDEN)
+
+            course = Group.objects.get(name=course_name)
+            students_list = course.user_set.values_list('username', flat = True)
+            students = User.objects.filter(username__in=students_list)
+            serializer = UserSerializers(students, many=True)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+            
+        elif request.session.get('role') == 'administrator':
+            #管理员有权查看所有课程
+            course_name = Group.objects.all()
+            course_name = course_name.exclude(name = 'administrator')
+            course_name = course_name.exclude(name = 'teacher')
+            course_name = course_name.exclude(name = 'student')
+            serializer = GroupSerializer(course_name, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            this_user =  User.objects.get(username=request.session.get('username'))
+            course_name = this_user.groups.all()
+            course_name = course_name.exclude(name = 'administrator')
+            course_name = course_name.exclude(name = 'teacher')
+            course_name = course_name.exclude(name = 'student')
+            serializer = GroupSerializer(course_name, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)  
+        

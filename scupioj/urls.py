@@ -26,6 +26,6 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view()),
     path('home/user/', UserView.as_view()),
     path('home/user/<int:username>/', UserView.as_view()), 
-    path('home/course/', CourseView.as_view())
-
+    path('home/', CourseView.as_view()), #课程操作
+    path('home/<str:coursename>/member/', CourseView.as_view()),
 ]

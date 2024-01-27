@@ -45,13 +45,23 @@ class LoginView(APIView):
             return Response({"error": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
 
         auth.login(request, user)
-        request.session['username'] = username   
-        
+        request.session['username'] = username
+        if user.groups.filter(name="administrator").exists():
+            role = "administrator"
+        elif user.groups.filter(name="teacher").exists():
+            role = "teacher"
+        else:
+            role = "student"
+        request.session['role'] = role
         refresh = RefreshToken.for_user(user)
-        return Response({
+        response = Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }, status=status.HTTP_200_OK)
+        
+        response.set_cookie('username', user.username)
+        response.set_cookie('role', role)
+        return response
 
 
         
