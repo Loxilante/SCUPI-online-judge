@@ -1,2 +1,1 @@
-course/migrations/
-user/migrations/
+**/migrations/
