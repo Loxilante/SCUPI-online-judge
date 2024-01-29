@@ -73,9 +73,9 @@ class CourseView(APIView):
                 try:   
                     course = Group.objects.get(name=course_name)
                     course.delete()
-                    return Response({"success": "Group deleted successfully"}, status=status.HTTP_200_OK)
+                    return Response({"success": "Course deleted successfully"}, status=status.HTTP_200_OK)
                 except Group.DoesNotExist:
-                    return Response({"error": "Group not found"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
             
             return Response({"error": "course name error"}, status=status.HTTP_400_BAD_REQUEST)     
                        
@@ -93,7 +93,7 @@ class CourseView(APIView):
                     course_name = kwargs.get('coursename')
                     students_list = course['students_list']
                     
-                    if not Group.objects.filter(name=course_name).exists():
+                    if not Group.objects.filter(name=course_name).exists() or course_name == 'administrator' or course_name == 'student' or course_name == 'teacher':
                         return Response({"error": "Invalid course not exist"}, status=status.HTTP_400_BAD_REQUEST)
                     
                     course = Group.objects.get(name=course_name)
@@ -107,7 +107,7 @@ class CourseView(APIView):
                     
                     for student in students_to_add:
                         if not User.objects.filter(username = student):
-                            return Response({"success": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
+                            return Response({"error": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
                         
                     for student in students_to_add:
                         user = User.objects.get(username = str(student))
@@ -118,13 +118,13 @@ class CourseView(APIView):
                         user = User.objects.get(username = str(student))
                         course.user_set.remove(user)
                         
-                    return Response({"success": "Group update successfully"}, status=status.HTTP_200_OK)    
+                    return Response({"success": "Course update successfully"}, status=status.HTTP_200_OK)    
                 except:
                     return Response({"error": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
         else:
-            return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)       
+            return Response({"error": "You don't have permission to edit course"}, status=status.HTTP_403_FORBIDDEN)       
     
     def get(self, request, *args, **kwargs):
         course_name = kwargs.get('coursename')
@@ -133,8 +133,8 @@ class CourseView(APIView):
             try:
                 course = Group.objects.get(name = course_name)
             except: 
-                return Response({"error": "course not exist"}, status=status.HTTP_400_BAD_REQUEST)       
-            if course is None or (not this_user.groups.filter(name=course_name).exists() and request.session.get('role') != 'administrator'):
+                return Response({"error": "course not exist"}, status=status.HTTP_404_NOT_FOUND)       
+            if not this_user.groups.filter(name=course_name).exists() and request.session.get('role') != 'administrator':
                 #课程不存在或（用户不在课程中且用户不是管理员）
                 return Response({"error": "You don't have permission to visit this course"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -155,7 +155,6 @@ class CourseView(APIView):
         else:
             this_user =  User.objects.get(username=request.session.get('username'))
             course_name = this_user.groups.all()
-            course_name = course_name.exclude(name = 'administrator')
             course_name = course_name.exclude(name = 'teacher')
             course_name = course_name.exclude(name = 'student')
             serializer = GroupSerializer(course_name, many=True)

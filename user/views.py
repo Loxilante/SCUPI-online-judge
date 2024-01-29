@@ -16,6 +16,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
+from urllib.parse import quote
 from .utils import OrPermission
    
 
@@ -53,14 +54,18 @@ class LoginView(APIView):
         else:
             role = "student"
         request.session['role'] = role
+        request.session['first_name'] = user.first_name
         refresh = RefreshToken.for_user(user)
         response = Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
+            'role':role,
+            'first_name':user.first_name,
         }, status=status.HTTP_200_OK)
         
         response.set_cookie('username', user.username)
         response.set_cookie('role', role)
+        response.set_cookie('first_name',quote(user.first_name.encode('utf-8')))
         return response
 
 
@@ -79,7 +84,7 @@ class logoutView(APIView):
     
     def post(self, request, *args, **kwargs):
         auth.logout(request)
-        return Response({"message": "Logout successful"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"success": "Logout successful"}, status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -128,7 +133,7 @@ class UserView(APIView):
             user = User.objects.filter(username=username).first()
             
             if not user:
-                return Response({"error": "Invalid username"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid username"}, status=status.HTTP_404_NOT_FOUND)
             if str(username) == str(this_user.username) or this_user.groups.filter(name="teacher").exists() or this_user.groups.filter(name="administrator").exists():
                 #只有本人或者是老师或者是管理员才能查看
                 serializer = UserSerializers(user)
@@ -195,7 +200,7 @@ class UserView(APIView):
             elif(request.data.get('new_user_group') == 'teacher'):
                 teacher, created = Group.objects.get_or_create(name='teacher')
                 teacher.user_set.add(user)
-            elif(request.data.get('new_user_group') == 'student'):
+            else:
                 student, created = Group.objects.get_or_create(name='student')  
                 student.user_set.add(user)
             
