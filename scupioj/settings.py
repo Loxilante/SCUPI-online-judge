@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-grdex)%9g(3_^adm0vni45e(ou@v$y^@ti*%24bt#rexyuch(d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True #上线前改为False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'user',
     'course',
+    'assignment',
     
 ]
 
@@ -149,7 +150,7 @@ REST_FRAMEWORK = {
     }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24), #jwt的有效期,上线前改为5分钟
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=24), #jwt的有效期,上线前改为5分钟
     'REFRESH_TOKEN_LIFETIME': timedelta(days=48), #jwt的刷新有效期,上线前改为1天
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,

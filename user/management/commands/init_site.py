@@ -11,14 +11,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # 创建一个超级用户
         if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser('admin', 'admin@example.com', '20040506Lzy.')
+            User.objects.create_superuser('admin', 'admin@example.com', '123456ABCDEf')
             
         administrator, created  = Group.objects.get_or_create(name='administrator')
         teacher, created = Group.objects.get_or_create(name='teacher')
         student, created = Group.objects.get_or_create(name='student')
         
-        teacher.permissions.add('user.view_all')
-        administrator.permissions.add('user.view_all','user.change_user')
 
         user = User.objects.create_user(username='2022141520159', password='123456', email='3177267975@qq.com')
         user.first_name = '张三'

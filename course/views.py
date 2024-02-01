@@ -84,7 +84,7 @@ class CourseView(APIView):
             
     def put(self, request, *args, **kwargs):
         this_user = User.objects.filter(username=request.session.get('username')).first()
-        if this_user.groups.filter(name="administrator").exists():
+        if request.session.get('role') == 'administrator':
             #只有管理员能编辑班级成员
             serializer = CourseSerializer(data=request.data)
             if serializer.is_valid():

@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView
+from assignment.views import AssignmentView, ProblemView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,4 +29,6 @@ urlpatterns = [
     path('home/user/<int:username>/', UserView.as_view()), 
     path('home/', CourseView.as_view()), #课程操作
     path('home/<str:coursename>/member/', CourseView.as_view()),
+    path('home/<str:coursename>/', AssignmentView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/', ProblemView.as_view()),
 ]
