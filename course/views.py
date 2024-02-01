@@ -17,6 +17,7 @@ from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
 
+
 class CourseSerializer(serializers.Serializer):
     course_name = serializers.CharField(required = True, max_length=100)
     students_list = serializers.ListField(child = serializers.CharField(max_length = 20))

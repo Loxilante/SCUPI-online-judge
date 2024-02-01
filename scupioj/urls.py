@@ -15,9 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
-from user.views import LoginView, logoutView, TokenRefreshView, UserView
+from django.urls import path, include, re_path
+from user.views import LoginView, logoutView, TokenRefreshView, UserView, MyNotifications,EnterMessage
 from course.views import CourseView
+import notifications.urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,7 +26,10 @@ urlpatterns = [
     path('logout/', logoutView.as_view()),
     path('refresh/', TokenRefreshView.as_view()),
     path('home/user/', UserView.as_view()),
-    path('home/user/<int:username>/', UserView.as_view()), 
-    path('home/', CourseView.as_view()), #课程操作
+    path('home/user/<int:username>/', UserView.as_view()),
+    path('home/', CourseView.as_view()),  # 课程操作
     path('home/<str:coursename>/member/', CourseView.as_view()),
+    # path('notifications/', include(notifications.urls, namespace='notifications')),
+    path('notifications/', MyNotifications.as_view()),
+    path('message/<int:messageid>/',EnterMessage.as_view()),
 ]
