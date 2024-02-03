@@ -16,8 +16,10 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
-from .models import Assignment, Problem
-
+from .models import Assignment, Problem, Submission
+import re
+from django.utils import timezone
+###################作业操作###################################
 class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment
@@ -105,10 +107,11 @@ class AssignmentView(APIView):
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
         
+###################题目操作###################################
 class ProblemSerializer(serializers.ModelSerializer):
         class Meta:
             model = Problem
-            fields = ['id', 'title', 'content', 'score', 'type', 'response_limit', 'non_programming_answer']
+            fields = ['id', 'title', 'content_problem', 'score', 'type', 'response_limit', 'non_programming_answer']
             extra_kwargs= {
             'id':{'read_only':True},
         }
@@ -207,3 +210,50 @@ class ProblemView(APIView):
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
+
+###################答题与判题操作###################################
+
+class SubmissionView(APIView):
+        permission_classes=[IsAuthenticated]
+
+        def post(self, request, *args, **kwargs):
+            try:
+                problem = Problem.objects.get(id = request.data.get('id'))
+                this_user = User.objects.get(username = request.session.get('username'))
+            except:
+                return Response(status = status.HTTP_404_NOT_FOUND)
+            
+            if(problem.assignment.due_date <= timezone.now()):
+                return Response({"error":"assignment out due"},status=status.HTTP_400_BAD_REQUEST)
+                
+            if(problem.response_limit is not None and Submission.objects.filter(user=this_user,problem=problem).count() >= problem.response_limit):
+                return Response({"error":"You've exceeded the limit of answers"},status=status.HTTP_400_BAD_REQUEST)
+               
+            if problem.type == "choice":
+                content_answer = request.data.get('content_answer')
+                choice_student = re.findall(r"<-&(.*?)&->", content_answer)
+                choice_answer = re.findall(r"<-&(.*?)&->", problem.non_programming_answer)
+                print(choice_student)
+                print(choice_answer)
+                choice_student = [item.lower() for item in choice_student]
+                choice_answer = [item.lower() for item in choice_answer]
+                
+                if len(choice_student) == len(choice_answer) and all(elem in choice_answer for elem in choice_student):
+                    score = problem.score
+                else:
+                    score = 0
+                submission = Submission()
+                submission.content_answer = content_answer
+                submission.score = score
+                submission.user = this_user
+                submission.problem = problem
+                submission.save()
+                return Response({
+                    "id":request.data.get('id'),
+                    "score":score
+                    }, status=status.HTTP_200_OK)
+            elif problem.type == "text":
+                pass
+            else:
+                pass
+        

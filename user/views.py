@@ -17,8 +17,7 @@ from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
 from urllib.parse import quote
-from .utils import OrPermission
-   
+
 
     
 class LoginView(APIView):
