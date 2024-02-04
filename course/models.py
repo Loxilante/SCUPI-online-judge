@@ -25,7 +25,7 @@ class Message(models.Model):
     class Meta:
         ordering = ['-sent_time']
 
-
+    
 class MessageRead(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -1,19 +1,24 @@
 from rest_framework import status
-from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework import serializers
 from rest_framework.response import Response
 from django.contrib.auth.models import User, Group
-from .models import Message,MessageRead
+#from .models import Message, MessageRead
+
 
 class CourseSerializer(serializers.Serializer):
-    course_name = serializers.CharField(required = True, max_length=100)
-    students_list = serializers.ListField(child = serializers.CharField(max_length = 20))
-#序列化器还有预留位
+    course_name = serializers.CharField(required=True, max_length=100)
+    students_list = serializers.ListField(child=serializers.CharField(max_length=20))
+
+
+# 序列化器还有预留位
 
 class GroupSerializer(serializers.Serializer):
     course_name = serializers.CharField(source='name', max_length=100)
-#序列化器还有预留位  
+
+
+# 序列化器还有预留位
 
 class UserSerializers(serializers.ModelSerializer):
     class Meta:
@@ -21,23 +26,22 @@ class UserSerializers(serializers.ModelSerializer):
         fields = "__all__"
         fields = ['username', 'first_name']
 
+
 class MessageSerializer(serializers.Serializer):
-    level=serializers.CharField(max_length=10)
-    title=serializers.CharField(max_length=255)
-    content=serializers.CharField()
-    receiver=serializers.ListField(child=serializers.CharField(max_length = 20),required=False, allow_null=True)
-    receive_group=serializers.CharField(required=False, allow_null=True)
+    level = serializers.CharField(max_length=10)
+    title = serializers.CharField(max_length=255)
+    content = serializers.CharField()
+    receiver = serializers.ListField(child=serializers.CharField(max_length=20), required=False, allow_null=True)
+    receive_group = serializers.CharField(required=False, allow_null=True)
 
 
-    
 class CourseView(APIView):
-    
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, *args, **kwargs):
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
-            #只有管理员能创建班级
+            # 只有管理员能创建班级
             serializer = CourseSerializer(data=request.data)
             if serializer.is_valid():
                 course = serializer.validated_data
@@ -53,111 +57,115 @@ class CourseView(APIView):
                         new_course.user_set.add(new_student)
                     else:
                         new_course.delete()
-                        return Response({"error": "fail to create this course"}, status=status.HTTP_400_BAD_REQUEST)  
-                        
+                        return Response({"error": "fail to create this course"}, status=status.HTTP_400_BAD_REQUEST)
+
                 return Response({"success": "Course created successfully"}, status=status.HTTP_200_OK)
-                
+
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)
-    
+
     def delete(self, request, *args, **kwargs):
-        this_user = User.objects.filter(username=request.session.get('username')).first()        
+        this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
-            #只有管理员可以删除课程
+            # 只有管理员可以删除课程
             course_name = request.data.get('course_name')
             if course_name is not None and course_name != 'teacher' and course_name != 'student' and course_name != 'administrator':
-                try:   
+                try:
                     course = Group.objects.get(name=course_name)
                     course.delete()
                     return Response({"success": "Group deleted successfully"}, status=status.HTTP_200_OK)
                 except Group.DoesNotExist:
                     return Response({"error": "Group not found"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            return Response({"error": "course name error"}, status=status.HTTP_400_BAD_REQUEST)     
-                       
+
+            return Response({"error": "course name error"}, status=status.HTTP_400_BAD_REQUEST)
+
         else:
             return Response({"error": "You don't have permission to delete course"}, status=status.HTTP_403_FORBIDDEN)
-            
+
     def put(self, request, *args, **kwargs):
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
-            #只有管理员能编辑班级成员
+            # 只有管理员能编辑班级成员
             serializer = CourseSerializer(data=request.data)
             if serializer.is_valid():
                 try:
                     course = serializer.validated_data
                     course_name = kwargs.get('coursename')
                     students_list = course['students_list']
-                    
+
                     if not Group.objects.filter(name=course_name).exists():
                         return Response({"error": "Invalid course not exist"}, status=status.HTTP_400_BAD_REQUEST)
-                    
+
                     course = Group.objects.get(name=course_name)
                     old_student = course.user_set.values_list('username', flat=True)
-                    
+
                     students_to_add = list(set(students_list) - set(old_student))
                     students_to_delete = list(set(old_student) - set(students_list))
-                    
-                    print("add:",students_to_add)
-                    print("delete:",students_to_delete)
-                    
+
+                    print("add:", students_to_add)
+                    print("delete:", students_to_delete)
+
                     for student in students_to_add:
-                        if not User.objects.filter(username = student):
-                            return Response({"success": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
-                        
+                        if not User.objects.filter(username=student):
+                            return Response({"success": "Students to add not exist"},
+                                            status=status.HTTP_400_BAD_REQUEST)
+
                     for student in students_to_add:
-                        user = User.objects.get(username = str(student))
+                        user = User.objects.get(username=str(student))
                         course.user_set.add(user)
-                            
+
                     for student in students_to_delete:
                         print(student)
-                        user = User.objects.get(username = str(student))
+                        user = User.objects.get(username=str(student))
                         course.user_set.remove(user)
-                        
-                    return Response({"success": "Group update successfully"}, status=status.HTTP_200_OK)    
+
+                    return Response({"success": "Group update successfully"}, status=status.HTTP_200_OK)
                 except:
                     return Response({"error": "Students to add not exist"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)       
-    
+            return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)
+
     def get(self, request, *args, **kwargs):
         course_name = kwargs.get('coursename')
         if course_name is not None:
             this_user = User.objects.get(username=request.session.get('username'))
             try:
-                course = Group.objects.get(name = course_name)
-            except: 
-                return Response({"error": "course not exist"}, status=status.HTTP_400_BAD_REQUEST)       
-            if course is None or (not this_user.groups.filter(name=course_name).exists() and request.session.get('role') != 'administrator'):
-                #课程不存在或（用户不在课程中且用户不是管理员）
-                return Response({"error": "You don't have permission to visit this course"}, status=status.HTTP_403_FORBIDDEN)
+                course = Group.objects.get(name=course_name)
+            except:
+                return Response({"error": "course not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            if course is None or (not this_user.groups.filter(name=course_name).exists() and request.session.get(
+                    'role') != 'administrator'):
+                # 课程不存在或（用户不在课程中且用户不是管理员）
+                return Response({"error": "You don't have permission to visit this course"},
+                                status=status.HTTP_403_FORBIDDEN)
 
             course = Group.objects.get(name=course_name)
-            students_list = course.user_set.values_list('username', flat = True)
+            students_list = course.user_set.values_list('username', flat=True)
             students = User.objects.filter(username__in=students_list)
             serializer = UserSerializers(students, many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
-            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
         elif request.session.get('role') == 'administrator':
-            #管理员有权查看所有课程
+            # 管理员有权查看所有课程
             course_name = Group.objects.all()
-            course_name = course_name.exclude(name = 'administrator')
-            course_name = course_name.exclude(name = 'teacher')
-            course_name = course_name.exclude(name = 'student')
+            course_name = course_name.exclude(name='administrator')
+            course_name = course_name.exclude(name='teacher')
+            course_name = course_name.exclude(name='student')
             serializer = GroupSerializer(course_name, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            this_user =  User.objects.get(username=request.session.get('username'))
+            this_user = User.objects.get(username=request.session.get('username'))
             course_name = this_user.groups.all()
-            course_name = course_name.exclude(name = 'administrator')
-            course_name = course_name.exclude(name = 'teacher')
-            course_name = course_name.exclude(name = 'student')
+            course_name = course_name.exclude(name='administrator')
+            course_name = course_name.exclude(name='teacher')
+            course_name = course_name.exclude(name='student')
             serializer = GroupSerializer(course_name, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 #########################消息系统########################################
 class MessageView(APIView):
@@ -167,63 +175,80 @@ class MessageView(APIView):
         serializer = MessageSerializer(data=request.data)
 
         if serializer.is_valid():
-            if not all(
-                    User.objects.filter(username=name).exists() for name in serializer.validated_data['receiver']):
-                return Response({'error': 'user not exist'}, status=status.HTTP_404_NOT_FOUND)
-            try:
-                this_user = User.objects.get(username=request.session.get('username'))
-                message = Message()
-                message.level = serializer.validated_data['level']
-                message.title = serializer.validated_data['title']
-                message.content = serializer.validated_data['content']
-                message.sender = this_user
-                message.save()
-            except:
-                return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
-            for receiver_name in serializer.validated_data['receiver']:
+            if 'receiver' in serializer.validated_data:
+                if not all(
+                        User.objects.filter(username=name).exists() for name in serializer.validated_data['receiver']):
+                    return Response({'error': 'user not exist'}, status=status.HTTP_404_NOT_FOUND)
                 try:
-                    receiver = User.objects.get(username=receiver_name)
-                    message_read = MessageRead()
-                    message_read.message = message
-                    message_read.user = receiver
-                    message_read.save()
+                    this_user = User.objects.get(username=request.session.get('username'))
+                    message = Message()
+                    message.level = serializer.validated_data['level']
+                    message.title = serializer.validated_data['title']
+                    message.content = serializer.validated_data['content']
+                    message.sender = this_user
+                    message.save()
                 except:
-                    return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
+                for receiver_name in serializer.validated_data['receiver']:
+                    try:
+                        receiver = User.objects.get(username=receiver_name)
+                        message_read = MessageRead()
+                        message_read.message = message
+                        message_read.user = receiver
+                        message_read.save()
+                    except:
+                        return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
 
-            return Response(request.data, status=status.HTTP_200_OK)
+                return Response(request.data, status=status.HTTP_200_OK)
+
+            elif 'receive_group' in serializer.validated_data:
+                if not all(Group.objects.filter(name=name).exists() for name in
+                           serializer.validated_data['receive_group']):
+                    return Response({'error': 'group not exist'}, status=status.HTTP_404_NOT_FOUND)
+                try:
+                    this_user = User.objects.get(username=request.session.get('username'))
+                    message = Message()
+                    message.level = serializer.validated_data['level']
+                    message.title = serializer.validated_data['title']
+                    message.content = serializer.validated_data['content']
+                    message.sender = this_user
+                    message.save()
+                except:
+                    return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
+                for group_name in serializer.validated_data['receive_group']:
+                    try:
+                        group = Group.objects.get(name=group_name)
+                        users = group.User.objects.all()
+                        for receiver in users:
+                            message_read = MessageRead()
+                            message_read.message = message
+                            message_read.user = receiver
+                            message_read.save()
+                    except:
+                        return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(request.data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
         serializer = MessageSerializer(data=request.data)
-        message_id=kwargs.get('message_id')
-        this_message=Message.objects.get(id=message_id)
+        message_id = request.data.get('message_id')
         try:
-            this_message.update(level=kwargs.get('level'),title=kwargs.get('title'),content=kwargs.get('content'))
+            this_message = Message.objects.get(id=message_id)
         except:
-            return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
-        message_read=MessageRead.objects.filter(message=this_message)
-
+            return Response({'error': 'message not exist'}, status=status.HTTP_404_NOT_FOUND)
+        message_read = MessageRead.objects.filter(message=this_message)
         for receiver_read in message_read:
-            receiver_read.delete()
-        for receiver_name in serializer.validated_data['receiver']:
-            try:
-                receiver = User.objects.get(username=receiver_name)
-                message_read = MessageRead()
-                message_read.message = this_message
-                message_read.user = receiver
-                message_read.save()
-            except:
-                return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
+            receiver_read.is_read= True
         return Response(request.data, status=status.HTTP_200_OK)
-    
+
     def delete(self, request, *args, **kwargs):
-        message_id=request.data.get('message_id')
         try:
-            this_message=Message.objects.get(id=message_id)
+            message_id = request.data.get('message_id')
         except:
             return Response({'error': 'message not found'}, status=status.HTTP_404_NOT_FOUND)
-        
+
+        this_message = Message.objects.get(id=message_id)
         this_message.delete()
-            
+
         return Response(request.data, status=status.HTTP_204_NO_CONTENT)
