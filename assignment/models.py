@@ -38,7 +38,7 @@ class Submission(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     submit_time = models.DateTimeField(default=timezone.now)
     content_answer = models.TextField()
-    score = models.IntegerField()
+    score = models.IntegerField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
     
     

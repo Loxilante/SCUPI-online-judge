@@ -233,8 +233,7 @@ class SubmissionView(APIView):
                 content_answer = request.data.get('content_answer')
                 choice_student = re.findall(r"<-&(.*?)&->", content_answer)
                 choice_answer = re.findall(r"<-&(.*?)&->", problem.non_programming_answer)
-                print(choice_student)
-                print(choice_answer)
+    
                 choice_student = [item.lower() for item in choice_student]
                 choice_answer = [item.lower() for item in choice_answer]
                 
@@ -253,7 +252,38 @@ class SubmissionView(APIView):
                     "score":score
                     }, status=status.HTTP_200_OK)
             elif problem.type == "text":
-                pass
+                score = None
+                comment = None
+                content_answer = request.data.get('content_answer')
+                
+                if problem.assignment.allow_ai == True:
+                    #ai 判题未开发
+                    submission = Submission()
+                    submission.content_answer = content_answer
+                    submission.score = score
+                    submission.user = this_user
+                    submission.problem = problem
+                    submission.comment = "ai grading undeveloped"
+                    submission.save()
+                    return Response({
+                    "id":request.data.get('id'),
+                    "score":score,
+                    "comment":comment
+                    }, status=status.HTTP_200_OK)
+                else:
+                    submission = Submission()
+                    submission.content_answer = content_answer
+                    submission.score = score
+                    submission.user = this_user
+                    submission.problem = problem
+                    submission.comment = "Wait for grading"
+                    submission.save()
+                    return Response({
+                    "id":request.data.get('id'),
+                    "score":score,
+                    "comment":"Wait for grading"
+                    }, status=status.HTTP_200_OK)
+                   
             else:
                 pass
         
