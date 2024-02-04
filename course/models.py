@@ -11,8 +11,6 @@ class Message(models.Model):
     ]
 
     sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
-    receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE, null=True, blank=True)
-    receive_group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True, null=True)
     level = models.CharField(max_length=10, choices=MESSAGE_LEVEL_CHOICES, default=ORDINARY)
     title = models.CharField(max_length=255)
     content = models.TextField()
