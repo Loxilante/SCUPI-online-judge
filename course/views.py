@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import serializers
 from rest_framework.response import Response
 from django.contrib.auth.models import User, Group
-#from .models import Message, MessageRead
+from .models import Message, MessageRead
 
 
 class CourseSerializer(serializers.Serializer):
@@ -32,7 +32,7 @@ class MessageSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
     content = serializers.CharField()
     receiver = serializers.ListField(child=serializers.CharField(max_length=20), required=False, allow_null=True)
-    receive_group = serializers.CharField(required=False, allow_null=True)
+    receive_group = serializers.ListField(child=serializers.CharField(),required=False,allow_null=True)
 
 
 class CourseView(APIView):
@@ -169,7 +169,7 @@ class CourseView(APIView):
 
 #########################消息系统########################################
 class MessageView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = MessageSerializer(data=request.data)
@@ -218,7 +218,7 @@ class MessageView(APIView):
                 for group_name in serializer.validated_data['receive_group']:
                     try:
                         group = Group.objects.get(name=group_name)
-                        users = group.User.objects.all()
+                        users = group.user_set.all()
                         for receiver in users:
                             message_read = MessageRead()
                             message_read.message = message
@@ -239,7 +239,8 @@ class MessageView(APIView):
             return Response({'error': 'message not exist'}, status=status.HTTP_404_NOT_FOUND)
         message_read = MessageRead.objects.filter(message=this_message)
         for receiver_read in message_read:
-            receiver_read.is_read= True
+            receiver_read.is_read=True
+            receiver_read.save()
         return Response(request.data, status=status.HTTP_200_OK)
 
     def delete(self, request, *args, **kwargs):

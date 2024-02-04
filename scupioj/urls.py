@@ -20,6 +20,7 @@ from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView
 
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', LoginView.as_view()),
