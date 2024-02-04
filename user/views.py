@@ -1,4 +1,5 @@
 from django.contrib import auth
+from django.http import HttpResponseRedirect
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -20,6 +21,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
 from .utils import OrPermission
 from course.models import Message
+from course.views import GroupSerializer
 
 
 class LoginView(APIView):
@@ -223,61 +225,4 @@ class UserView(APIView):
             return Response({"error": "You don't have permission to delete user"}, status=status.HTTP_403_FORBIDDEN)
 
 
-class MyNotifications(APIView):
-    permission_classes = [AllowAny]
 
-    def get(self, request, *args, **kwargs):
-        this_username = request.session.get('username')
-        this_user = User.objects.filter(username=this_username).first()
-        if request.get('messageid').exist():
-            request['messageid'] = None
-        if not this_username:
-            return Response({"error": "You have not logged in,please login or create a new account"},
-                            status=status.HTTP_403_FORBIDDEN)
-        elif this_user.groups.filter(name="administrator").exists():
-            return Response(Message.objects.all())
-        else:
-            message = []
-            message.append(Message.objects.filter(reciever_group=this_user.groups.id))
-            message.append(Message.objects.filter(sender=this_user.id))
-            return Response(message)
-
-    def post(self, request, *args, **kwargs):
-        messageid = request.data.get('messageid')
-        if messageid != None:
-            return render(request, 'message/{}/.html'.format([messageid]), locals())
-        if request.data.get('create') == True:
-            return render(request, 'message/create/.html')
-
-
-class EnterMessage(APIView):
-    #包括阅读和删除
-    def get(self, request, *args, **kwargs):
-        messageid = request.data.get('messageid')
-        this_message = Message.objects.get(id=messageid)
-        this_message.is_read=True
-        return Response(this_message)
-
-    def post(self, request, *args, **kwargs):
-        if kwargs.get('delete')==True:
-            this_message = Message.objects.get(request.data.get('messageid'))
-            this_message.delete()
-        elif kwargs.get('return')==True:
-            return render(request, 'notifications/.html')
-
-
-class CreateMessage(APIView):
-
-    def get(self, request, *args, **kwargs):
-        this_user = User.objects.filter(username=request.session.get('username')).first()
-        if this_user.groups.filter(name='administrator').exist():
-            return Response(this_user.groups.all())
-        if this_user.groups.filter(name='teacher').exist():
-            return Response(this_user.groups.exclude(name='teacher'))
-        if this_user.groups.filter(name='student').exist():
-            return Response('您未拥有送信的权限')
-
-    def post(self, request, *args, **kwargs):
-        Message.objects.create(sender=request.session.get('username'), receiver=kwargs.get('receive_group').user.all(),
-                               level=kwargs.get('level'), title=kwargs.get('title'), content=kwargs.get('content'))
-        return Response('发信成功')

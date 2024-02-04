@@ -16,9 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from user.views import LoginView, logoutView, TokenRefreshView, UserView, MyNotifications,EnterMessage
-from course.views import CourseView
-import notifications.urls
+from user.views import LoginView, logoutView, TokenRefreshView, UserView
+from course.views import CourseView,MessageView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,7 +28,5 @@ urlpatterns = [
     path('home/user/<int:username>/', UserView.as_view()),
     path('home/', CourseView.as_view()),  # 课程操作
     path('home/<str:coursename>/member/', CourseView.as_view()),
-    # path('notifications/', include(notifications.urls, namespace='notifications')),
-    path('notifications/', MyNotifications.as_view()),
-    path('message/<int:messageid>/',EnterMessage.as_view()),
+    path('message/',MessageView.as_view()),
 ]

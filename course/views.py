@@ -1,22 +1,10 @@
-from django.contrib import auth
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth.hashers import check_password
 from rest_framework.permissions import AllowAny,IsAuthenticated
-from django.shortcuts import render, HttpResponse
-from django.views import View
 from rest_framework.views import APIView
 from rest_framework import serializers
 from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView
-from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView #继承了ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
-from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
-from django.contrib.auth.hashers import make_password
-
+from .models import Message,MessageRead
 
 class CourseSerializer(serializers.Serializer):
     course_name = serializers.CharField(required = True, max_length=100)
@@ -32,6 +20,15 @@ class UserSerializers(serializers.ModelSerializer):
         model = User
         fields = "__all__"
         fields = ['username', 'first_name']
+
+class MessageSerializer(serializers.Serializer):
+    level=serializers.CharField(max_length=10)
+    title=serializers.CharField(max_length=255)
+    content=serializers.CharField()
+    receiver=serializers.ListField(child=serializers.CharField(max_length = 20))
+    receive_group=serializers.CharField()
+
+
     
 class CourseView(APIView):
     
@@ -160,5 +157,72 @@ class CourseView(APIView):
             course_name = course_name.exclude(name = 'teacher')
             course_name = course_name.exclude(name = 'student')
             serializer = GroupSerializer(course_name, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)  
-        
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MessageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+
+    def post(self, request, *args, **kwargs):
+        serializer = MessageSerializer(data=request.data)
+
+        if serializer.is_valid():
+            if not all(
+                    User.objects.filter(username=name).exists() for name in serializer.validated_data['receiver']):
+                return Response({'error': 'user not exist'}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                this_user = User.objects.get(username=request.session.get('username'))
+                message = Message()
+                message.level = serializer.validated_data['level']
+                message.title = serializer.validated_data['title']
+                message.content = serializer.validated_data['content']
+                message.sender = this_user
+                message.save()
+            except:
+                return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
+            for receiver_name in serializer.validated_data['receiver']:
+                try:
+                    receiver = User.objects.get(username=receiver_name)
+                    message_read = MessageRead()
+                    message_read.message = message
+                    message_read.user = receiver
+                    message_read.save()
+                except:
+                    return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
+
+            return Response(request.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        serializer = MessageSerializer(data=request.data)
+        message_id=kwargs.get('message_id')
+        this_message=Message.objects.get(id=message_id)
+        try:
+            this_message.update(level=kwargs.get('level'),title=kwargs.get('title'),content=kwargs.get('content'))
+        except:
+            return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
+        message_read=MessageRead.objects.filter(message=this_message)
+
+        for receiver_read in message_read:
+            receiver_read.delete()
+        for receiver_name in serializer.validated_data['receiver']:
+            try:
+                receiver = User.objects.get(username=receiver_name)
+                message_read = MessageRead()
+                message_read.message = this_message
+                message_read.user = receiver
+                message_read.save()
+            except:
+                return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(request.data, status=status.HTTP_200_OK)
+    def delete(self, request, *args, **kwargs):
+        message_id=kwargs.get('message_id')
+        this_message=Message.objects.get(id=message_id)
+        try:
+            this_message.delete()
+        except:
+            return Response({'error': 'message not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(request.data, status=status.HTTP_200_OK)
