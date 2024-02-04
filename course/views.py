@@ -25,8 +25,8 @@ class MessageSerializer(serializers.Serializer):
     level=serializers.CharField(max_length=10)
     title=serializers.CharField(max_length=255)
     content=serializers.CharField()
-    receiver=serializers.ListField(child=serializers.CharField(max_length = 20))
-    receive_group=serializers.CharField()
+    receiver=serializers.ListField(child=serializers.CharField(max_length = 20),required=False, allow_null=True)
+    receive_group=serializers.CharField(required=False, allow_null=True)
 
 
     
@@ -43,7 +43,7 @@ class CourseView(APIView):
                 course = serializer.validated_data
                 course_name = course['course_name']
                 students_list = course['students_list']
-                
+
                 if Group.objects.filter(name=course_name).exists():
                     return Response({"error": "Invalid course name"}, status=status.HTTP_400_BAD_REQUEST)
                 new_course, created = Group.objects.get_or_create(name=course_name)
@@ -159,11 +159,9 @@ class CourseView(APIView):
             serializer = GroupSerializer(course_name, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+#########################消息系统########################################
 class MessageView(APIView):
     permission_classes = [IsAuthenticated]
-
-
 
     def post(self, request, *args, **kwargs):
         serializer = MessageSerializer(data=request.data)
@@ -218,11 +216,14 @@ class MessageView(APIView):
             except:
                 return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
         return Response(request.data, status=status.HTTP_200_OK)
+    
     def delete(self, request, *args, **kwargs):
-        message_id=kwargs.get('message_id')
-        this_message=Message.objects.get(id=message_id)
+        message_id=request.data.get('message_id')
         try:
-            this_message.delete()
+            this_message=Message.objects.get(id=message_id)
         except:
             return Response({'error': 'message not found'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(request.data, status=status.HTTP_200_OK)
+        
+        this_message.delete()
+            
+        return Response(request.data, status=status.HTTP_204_NO_CONTENT)
