@@ -226,9 +226,9 @@ class MessageView(APIView):
                             message_read.save()
                     except:
                         return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
-                return Response(request.data, status=status.HTTP_200_OK)
+                return Response({"success": "Create message successfully"}, status=status.HTTP_200_OK)
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "invalid request"},status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
         serializer = MessageSerializer(data=request.data)
@@ -241,7 +241,7 @@ class MessageView(APIView):
         for receiver_read in message_read:
             receiver_read.is_read=True
             receiver_read.save()
-        return Response(request.data, status=status.HTTP_200_OK)
+        return Response({"success": "change is_read to True"}, status=status.HTTP_200_OK)
 
     def delete(self, request, *args, **kwargs):
         try:
@@ -252,4 +252,4 @@ class MessageView(APIView):
         this_message = Message.objects.get(id=message_id)
         this_message.delete()
 
-        return Response(request.data, status=status.HTTP_204_NO_CONTENT)
+        return Response({"success": "Delete message successfully"}, status=status.HTTP_204_NO_CONTENT)
