@@ -225,13 +225,12 @@ class MessageView(APIView):
                             message_read.user = receiver
                             message_read.save()
                     except:
-                        return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({'error': 'receive_group save error'}, status=status.HTTP_404_NOT_FOUND)
                 return Response({"success": "Create message successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "invalid request"},status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
-        serializer = MessageSerializer(data=request.data)
         message_id = request.data.get('message_id')
         try:
             this_message = Message.objects.get(id=message_id)
@@ -250,6 +249,8 @@ class MessageView(APIView):
             return Response({'error': 'message not found'}, status=status.HTTP_404_NOT_FOUND)
 
         this_message = Message.objects.get(id=message_id)
-        this_message.delete()
-
+        if this_message.sender.username != request.session.get("username"):
+            return Response({"error":"You do not have permission to delete this message"},status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            this_message.delete()
         return Response({"success": "Delete message successfully"}, status=status.HTTP_204_NO_CONTENT)
