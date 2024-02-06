@@ -17,8 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
-from course.views import CourseView
-
+from course.views import CourseView,MessageView
 
 
 urlpatterns = [
@@ -30,5 +29,6 @@ urlpatterns = [
     path('home/user/<int:username>/', UserView.as_view()), #这里是int
     path('home/', CourseView.as_view()), #课程操作
     path('home/<str:coursename>/member/', CourseView.as_view()),
-
+    path('message/',MessageView.as_view()),
+    path('message/<int:received>/',MessageView.as_view()),
 ]

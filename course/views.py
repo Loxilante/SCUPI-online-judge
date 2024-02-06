@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
@@ -171,6 +172,35 @@ class CourseView(APIView):
 class MessageView(APIView):
     permission_classes = [AllowAny]
 
+    def get(self, request, *args, **kwargs):
+        received=bool(kwargs.get('received'))
+        try:
+            this_user = User.objects.get(username=request.session.get('username'))
+        except:
+            return Response({'error': 'invalid user,please login or register'}, status=status.HTTP_404_NOT_FOUND)
+        if received == True:
+            try:
+                message_read=list(MessageRead.objects.filter(user=this_user))
+                message=[]
+                for i in message_read:
+                    this_message=i.message
+                    message.append(MessageSerializer(data=this_message).data)
+            except:
+                return Response({'error': 'can not find received message'}, status=status.HTTP_404_NOT_FOUND)
+            print(message)
+            return JsonResponse(message,safe=False,status=status.HTTP_200_OK)
+        elif received == False:
+            try:
+                message=Message.objects.filter(sender=this_user)
+                message=list(message)
+                print('1')
+            except:
+                return Response({'error': 'can not find sent message'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(message, status=status.HTTP_200_OK)
+
+
+
+
     def post(self, request, *args, **kwargs):
         serializer = MessageSerializer(data=request.data)
 
@@ -199,7 +229,7 @@ class MessageView(APIView):
                     except:
                         return Response({'error': 'receiver save error'}, status=status.HTTP_404_NOT_FOUND)
 
-                return Response(request.data, status=status.HTTP_200_OK)
+                return Response({"success": "Create message successfully"}, status=status.HTTP_200_OK)
 
             elif 'receive_group' in serializer.validated_data:
                 if not all(Group.objects.filter(name=name).exists() for name in
