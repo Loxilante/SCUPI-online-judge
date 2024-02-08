@@ -170,7 +170,7 @@ class CourseView(APIView):
 
 #########################消息系统########################################
 class MessageView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         received = bool(kwargs.get('received'))
