@@ -22,6 +22,9 @@ class Message(models.Model):
     def __str__(self):
         return self.title
 
+    def to_dict(self):
+        return {'sender':self.sender.first_name,'level':self.level,'title':self.title,'content':self.content,'sent_time':self.sent_time}
+
     class Meta:
         ordering = ['-sent_time']
 
