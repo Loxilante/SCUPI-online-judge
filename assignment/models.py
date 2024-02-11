@@ -41,4 +41,16 @@ class Submission(models.Model):
     score = models.IntegerField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
     
+class CodeAnswer(models.Model):
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    command_line_arguments = models.CharField(max_length= 100, null=True, blank=True, default = None)
+    standard_input = models.TextField(null=True, blank=True, default = None)
+    standard_output = models.TextField()
+    time_limit = models.IntegerField(default = 10000) #时间单位为ms
+    space_limit = models.IntegerField(default = 10000) #内存单位为kb
+    score = models.IntegerField()
+    
+    
+    
+    
     
