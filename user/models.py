@@ -1,9 +1,9 @@
-#from typing import AbstractSet
-from django.db import models
-
+# # from typing import AbstractSet
+# from django.db import models
+#
 # #创建一些新的permission
 # class NewPermission(models.Model):
-    
+#
 #         class Meta:
 #             permissions = [
 #                 ('view_all','Can view all information'),
