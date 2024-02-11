@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView,MessageView
-
+from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,9 +26,13 @@ urlpatterns = [
     path('logout/', logoutView.as_view()),
     path('refresh/', TokenRefreshView.as_view()),
     path('home/user/', UserView.as_view()),
-    path('home/user/<int:username>/', UserView.as_view()), #这里是int
-    path('home/', CourseView.as_view()), #课程操作
-    path('home/<str:coursename>/member/', CourseView.as_view()),
     path('message/',MessageView.as_view()),
     path('message/<int:received>/',MessageView.as_view()),
+    path('home/user/<int:username>/', UserView.as_view()), 
+    path('home/', CourseView.as_view()), 
+    path('home/<str:coursename>/member/', CourseView.as_view()),
+    path('home/<str:coursename>/', AssignmentView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/', ProblemView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/<int:problem_id>/', CodeAnswerView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/submit/', SubmissionView.as_view())
 ]

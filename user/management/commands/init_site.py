@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # 创建一个超级用户
         if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser('admin', 'admin@example.com', '20040506Lzy.')
+            User.objects.create_superuser('admin', 'admin@example.com', '123456ABCDEf')
             
         administrator, created  = Group.objects.get_or_create(name='administrator')
         teacher, created = Group.objects.get_or_create(name='teacher')

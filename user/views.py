@@ -25,6 +25,7 @@ from course.models import Message
 from course.views import GroupSerializer
 
 
+
 class LoginView(APIView):
     """
     API view for user login.
