@@ -178,19 +178,20 @@ class MessageView(APIView):
             this_user = User.objects.get(username=request.session.get('username'))
         except:
             return Response({'error': 'invalid user,please login or register'}, status=status.HTTP_401_UNAUTHORIZED)
-        if received == True:
+        if received == True: #用户收到的信息
             try:
                 message_read = list(MessageRead.objects.filter(user=this_user))
                 message_set = []
                 for i in message_read:
-                    message = Message.objects.get(id=i.message.id)
+                    message = i.message
                     this_message = message.to_dict()
                     this_message['id'] = message.id
+                    this_message['is_read'] = i.is_read
                     message_set.append(this_message)
             except:
                 return Response({'error': 'can not find received message'}, status=status.HTTP_404_NOT_FOUND)
             return JsonResponse(message_set, safe=False, status=status.HTTP_200_OK)
-        elif received == False:
+        elif received == False: #用户发送的信息
             try:
                 message = Message.objects.filter(sender=this_user)
                 message_set = []
@@ -219,7 +220,7 @@ class MessageView(APIView):
                     message.sender = this_user
                     message.save()
                 except:
-                    return Response({'error': 'message save error'}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({'error': 'message save error'}, status=status.HTTP_400_BAD_REQUEST)
                 for receiver_name in serializer.validated_data['receiver']:
                     try:
                         receiver = User.objects.get(username=receiver_name)
@@ -262,24 +263,30 @@ class MessageView(APIView):
             return Response({"error": "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
+        try:
+            this_user = User.objects.get(username=request.session.get('username'))
+        except:
+            return Response({'error': 'invalid user,please login or register'}, status=status.HTTP_401_UNAUTHORIZED)
         message_id = request.data.get('message_id')
         try:
             this_message = Message.objects.get(id=message_id)
         except:
             return Response({'error': 'message not exist'}, status=status.HTTP_404_NOT_FOUND)
-        message_read = MessageRead.objects.filter(message=this_message)
-        for receiver_read in message_read:
-            receiver_read.is_read = True
-            receiver_read.save()
+        if not this_message.messageread_set.filter(user = this_user).exists():
+            return Response({'error': 'message not exist'}, status=status.HTTP_404_NOT_FOUND)
+        message_read = this_message.messageread_set.get(user = this_user)
+        message_read.is_read = True
+        message_read.save()
         return Response({"success": "change is_read to True"}, status=status.HTTP_200_OK)
 
     def delete(self, request, *args, **kwargs):
         try:
             message_id = request.data.get('message_id')
+            this_message = Message.objects.get(id=message_id)
         except:
             return Response({'error': 'message not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        this_message = Message.objects.get(id=message_id)
+        
         if this_message.sender.username != request.session.get("username"):
             return Response({"error": "You do not have permission to delete this message"},
                             status=status.HTTP_401_UNAUTHORIZED)
