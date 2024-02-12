@@ -1,9 +1,7 @@
 import os
 import http.client
 import json
-import uuid
 from django.contrib import auth
-import requests
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,6 +23,7 @@ from .models import Assignment, Problem, Submission, CodeAnswer
 import re
 from django.utils import timezone
 import tempfile
+from django.http import JsonResponse
 ###################作业操作###################################
 class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -503,4 +502,180 @@ class SubmissionView(APIView):
                 "score":score,
                 "comment":comment
                 }, status=status.HTTP_200_OK)
+###########################################题目批改与信息获取##############################################
+class SubmissionSerializer(serializers.Serializer):
+    course_name = serializers.CharField(required=True, max_length=100)
+    students_list = serializers.ListField(child=serializers.CharField(max_length=20))
+class QuestionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        this_user = User.objects.filter(username=request.session.get('username')).first()
+        if not this_user.groups.filter(name=kwargs.get('coursename')).exists() and request.session.get('role') != 'administrator':
+            return Response(status=status.HTTP_403_FORBIDDEN) #判断此人是否在组中
         
+        this_user = this_user = User.objects.get(username = request.session.get('username'))
+       
+        try:
+            course = Group.objects.get(name=kwargs.get('coursename'))
+            assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+            problem = assignment.problems.get(id=kwargs.get('problem_id'))
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if(kwargs.get('student') == 'all'):
+            if not (request.session.get('role')  == 'administrator' or request.session.get('role')  == 'teacher'):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            students = User.objects.filter(groups = course)
+            submission_list = []
+            for student in students:
+                try:
+                    this_submission = Submission.objects.filter(user=student, problem=problem).latest('submit_time')
+                    submission_data = {
+                        # 获取字段值
+                        'id': this_submission.id,
+                        'problem_id': this_submission.problem_id,
+                        'submit_time': this_submission.submit_time,
+                        'content_answer': this_submission.content_answer,
+                        'score': this_submission.score,
+                        'comment': this_submission.comment,
+                        'username': student.username,
+                        'first_name': student.first_name
+                    }
+                except Submission.DoesNotExist:
+                    submission_data = {
+                        'id': None,
+                        'problem_id': None,
+                        'submit_time': None,
+                        'content_answer': None,
+                        'score': None,
+                        'comment': None,
+                        'username': student.username,
+                        'first_name': student.first_name
+                    }
+                submission_list.append(submission_data)
+
+                
+            return JsonResponse(submission_list ,status=status.HTTP_200_OK, safe=False)
+            
+        else:
+            try:
+                student = User.objects.get(username = kwargs.get('student'))
+                submission = Submission.objects.filter(user = student, problem = problem).values()
+            except:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            
+            if not (request.session.get('role')  == 'administrator' or request.session.get('role')  == 'teacher'):
+                if(student.username != request.session.get('username')):
+                    return Response(status=status.HTTP_403_FORBIDDEN)
+                
+            return Response(submission, status=status.HTTP_200_OK)
+        
+    def put(self, request, *args, **kwargs):
+        this_user = User.objects.filter(username=request.session.get('username')).first()
+        if not this_user.groups.filter(name=kwargs.get('coursename')).exists() and request.session.get('role') != 'administrator':
+            return Response(status=status.HTTP_403_FORBIDDEN) #判断此人是否在组中
+        
+        if not (request.session.get('role')  == 'administrator' or request.session.get('role')  == 'teacher'):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            
+        this_user = this_user = User.objects.get(username = request.session.get('username'))
+    
+        try:
+            course = Group.objects.get(name=kwargs.get('coursename'))
+            assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+            problem = assignment.problems.get(id=kwargs.get('problem_id'))
+            submission = problem.submission_set.get(id=request.data.get('submission_id'))
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        submission.score = request.data.get('score')
+        submission.comment = request.data.get('comment')
+        submission.save()
+        return Response({'success':'score and comment updated'}, status=status.HTTP_200_OK)
+    
+    def delete(self, request, *args, **kwargs):
+        this_user = User.objects.filter(username=request.session.get('username')).first()
+        if not this_user.groups.filter(name=kwargs.get('coursename')).exists() and request.session.get('role') != 'administrator':
+            return Response(status=status.HTTP_403_FORBIDDEN) #判断此人是否在组中
+        
+        if not (request.session.get('role')  == 'administrator' or request.session.get('role')  == 'teacher'):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            
+        this_user = this_user = User.objects.get(username = request.session.get('username'))
+    
+        try:
+            course = Group.objects.get(name=kwargs.get('coursename'))
+            assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+            problem = assignment.problems.get(id=kwargs.get('problem_id'))
+            for delete_id in request.data.get('delete_id'):
+                submission = problem.submission_set.get(id = delete_id)
+                submission.delete()
+
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+class GetAssignmentScoreView(APIView):
+    
+    permission_classes=[IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        this_user = User.objects.filter(username=request.session.get('username')).first()
+        if not this_user.groups.filter(name=kwargs.get('coursename')).exists() and request.session.get('role') != 'administrator':
+            return Response(status=status.HTTP_403_FORBIDDEN) #判断此人是否在组中
+ 
+        if kwargs.get('student') == None:
+            try:
+                course = Group.objects.filter(name=kwargs.get('coursename')).first()
+                assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+                problems = list(assignment.problems.all().values())
+                
+                sum_score = 0
+                for problem in problems:
+                    sum_score += problem['score']
+                    
+                return Response({"sumscore":sum_score},status=status.HTTP_200_OK)
+            except:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            if request.session.get('role') == 'student' and kwargs.get('student') != request.session.get('username'):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            
+            try:
+                course = Group.objects.filter(name=kwargs.get('coursename')).first()
+                assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+                problems = list(assignment.problems.all().values())
+                problem_score_list = []
+                for problem in problems:
+                   
+                    this_problem = assignment.problems.get(id = problem["id"])
+                    if not this_problem.submission_set.filter(user = User.objects.get(username = kwargs.get('student'))).exists():
+                        score_list = {
+                        "problem_id":this_problem.id,
+                        "title":this_problem.title,
+                        "score":0
+                        }
+                    else:
+                        submission = this_problem.submission_set.filter(user=User.objects.get(username=kwargs.get('student'))).order_by('-score').first()
+                        score_list = {
+                            "problem_id":this_problem.id,
+                            "title":this_problem.title,
+                            "score":submission.score
+                        }
+                    
+                    problem_score_list.append(score_list)
+                
+                return JsonResponse(problem_score_list,status=status.HTTP_200_OK, safe=False)
+            except:     
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            
+            
+            
+        
+        
+        
+            
+            
