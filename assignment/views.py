@@ -661,14 +661,76 @@ class GetAssignmentScoreView(APIView):
                     else:
                         submission = this_problem.submission_set.filter(user=User.objects.get(username=kwargs.get('student'))).order_by('-score').first()
                         score_list = {
-                            "problem_id":this_problem.id,
-                            "title":this_problem.title,
-                            "score":submission.score
+                        "problem_id":this_problem.id,
+                        "title":this_problem.title,
+                        "score":submission.score
                         }
                     
                     problem_score_list.append(score_list)
                 
                 return JsonResponse(problem_score_list,status=status.HTTP_200_OK, safe=False)
+            except:     
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            
+class GetStuScoreView(APIView): #获取作业总得分
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        this_user = User.objects.filter(username=request.session.get('username')).first()
+        if not this_user.groups.filter(name=kwargs.get('coursename')).exists() and request.session.get('role') != 'administrator':
+            return Response(status=status.HTTP_403_FORBIDDEN) #判断此人是否在组中
+        
+        if kwargs.get('student') == "all":
+            if request.session.get('role') == 'student':
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            course = Group.objects.filter(name=kwargs.get('coursename')).first()
+            assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+            problems = list(assignment.problems.all().values())
+            students = User.objects.filter(groups = course).values()
+            studnet_list = []
+            for student in students:
+                score = 0
+                for problem in problems:
+                    this_problem = assignment.problems.get(id = problem["id"])
+                    if not this_problem.submission_set.filter(user_id = student['id']).exists():
+                        score +=0
+                    else:
+                        submission = this_problem.submission_set.filter(user_id = student['id']).order_by('-score').first()
+                        if submission.score is not None:
+                            score+=submission.score
+                        
+                this_stulist = {
+                'assignment_id': assignment.id,
+                'assignment_name': assignment.name,
+                'username':student['username'],
+                'first_name':student['first_name'],
+                'score': score
+                }
+                studnet_list.append(this_stulist)
+
+            return JsonResponse(studnet_list ,status=status.HTTP_200_OK, safe=False)    
+        else:
+            if request.session.get('role') == 'student' and request.session.get('username') != kwargs.get('student'):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            try:
+                course = Group.objects.filter(name=kwargs.get('coursename')).first()
+                assignment = course.assignments.get(name = kwargs.get('assignmentname'))
+                problems = list(assignment.problems.all().values())
+                score = 0
+                for problem in problems:
+                    this_problem = assignment.problems.get(id = problem["id"])
+                    if not this_problem.submission_set.filter(user = User.objects.get(username = kwargs.get('student'))).exists():
+                        score +=0
+                    else:
+                        submission = this_problem.submission_set.filter(user=User.objects.get(username=kwargs.get('student'))).order_by('-score').first()
+                        if submission.score is not None:
+                            score+=submission.score
+  
+                return Response({
+                    'assignment_id': assignment.id,
+                    'assignment_name': assignment.name,
+                    'score': score
+                    },status=status.HTTP_200_OK)
             except:     
                 return Response(status=status.HTTP_404_NOT_FOUND)
             

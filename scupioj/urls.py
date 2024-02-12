@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView,MessageView
-from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView
+from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -39,4 +39,5 @@ urlpatterns = [
     path('home/<str:coursename>/<str:assignmentname>/<int:problem_id>/', QuestionDetailView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getscore/',GetAssignmentScoreView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getscore/<str:student>/',GetAssignmentScoreView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/getstuscore/<str:student>/', GetStuScoreView.as_view())
 ]
