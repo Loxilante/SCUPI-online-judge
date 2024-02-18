@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
 # Create your views here.
-class CppCompileSerializer(serializers.Serializer):
+class JavaCompileSerializer(serializers.Serializer):
     dir = serializers.CharField(required=True)
     kb = serializers.FloatField(required=True)
     args = serializers.CharField(required=False, allow_blank=True)
@@ -14,17 +14,16 @@ class CppCompileSerializer(serializers.Serializer):
     stdin_data = serializers.CharField(required=False, allow_blank=True)
     
 
-class cppView(APIView):
+class javaView(APIView):
     
     def post(self, request):
-        serializer = CppCompileSerializer(data=request.data)
+        serializer = JavaCompileSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         source_dir = os.getcwd() + "/files" +request.data.get('dir')
         limit_in_kb = request.data.get('kb')
         args = request.data.get('args')
-        output_exe = f"{source_dir}/main.exe"
         time_limit_in_ms = request.data.get('time_limit_in_ms')
         stdin_data = request.data.get('stdin_data')
         try:
@@ -32,15 +31,14 @@ class cppView(APIView):
             if not os.path.exists(source_dir):
                 return Response({"error":f"Source directory '{source_dir}' not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 搜索 .cpp 和 .h 文件
-            cpp_files = [os.path.join(source_dir, f) for f in os.listdir(source_dir) if f.endswith('.cpp') or f.endswith('.h')]
+            # 搜索 .java文件
+            java_files = [os.path.join(source_dir, f) for f in os.listdir(source_dir) if f.endswith('.java')]
 
-            if not cpp_files:
-                return Response({"error":"No .cpp or .h files found in the source directory."}, status=status.HTTP_400_BAD_REQUEST)
+            if not java_files:
+                return Response({"error":"No .java files found in the source directory."}, status=status.HTTP_400_BAD_REQUEST)
 
             # 构建编译命令
-            compile_command = ["g++"] + cpp_files + ["-o", output_exe]
-
+            compile_command = ["javac"] + java_files
             # 执行编译命令
             subprocess.run(compile_command, check=True)
 
@@ -48,7 +46,7 @@ class cppView(APIView):
             return Response({"error":f"CE:{cpe_error}"},status=status.HTTP_400_BAD_REQUEST)
     
         try:
-            output = subprocess.check_output([os.getcwd()+"/judge/excuting.exe", output_exe, args, stdin_data, str(time_limit_in_ms), str(limit_in_kb)], stderr=subprocess.STDOUT, text=True)
+            output = subprocess.check_output([os.getcwd()+"/judge/excuting.exe", source_dir, args, stdin_data, str(time_limit_in_ms), str(limit_in_kb)], stderr=subprocess.STDOUT, text=True)
             output = re.findall(r"<-&(.*?)&->", output, re.DOTALL)
             
 

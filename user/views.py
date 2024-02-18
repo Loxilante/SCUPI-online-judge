@@ -70,6 +70,9 @@ class LoginView(APIView):
         response.set_cookie('username', user.username)
         response.set_cookie('role', role)
         response.set_cookie('first_name',quote(user.first_name.encode('utf-8')))
+        response.set_cookie('access', refresh.access_token)
+        response.set_cookie('refresh', refresh)
+
         return response
 
 

@@ -11,6 +11,7 @@ WORKDIR /code
 # 安装g++用于编译C++代码
 RUN apt-get update && apt-get install -y g++
 RUN apt-get install vim -y
+RUN apt-get install -y --fix-missing openjdk-17-jdk
 
 # 安装依赖
 COPY requirements.txt /code/
@@ -22,4 +23,4 @@ RUN g++ /code/judge/excuting.cpp -o /code/judge/excuting.exe
 # 安装uwsgi
 RUN pip install uwsgi
 
-CMD ["uwsgi", "--http-socket", "0.0.0.0:80", "--file", "/code/cpp_sandbox/wsgi.py"]
+CMD ["uwsgi", "--http-socket", "0.0.0.0:80", "--file", "/code/java_sandbox/wsgi.py"]
