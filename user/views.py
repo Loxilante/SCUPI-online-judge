@@ -23,21 +23,23 @@ from urllib.parse import quote
 from course.models import Message
 from course.views import GroupSerializer
 
-
+"""用户系统
+    用户系统主要实现的功能为用户账户的增删改查，处理账号的登录，注销与续期
+    用户分为三种角色：administrator，teacher，student分别拥有不同的权限
+    系统通过token的方式确认用户是否登录，jwt-token的记录的内容延续时间等都可以在/scupioj/setting.py中进行设置
+    access token负责认证，refresh token负责续期，当access token过期之后可通过refresh token重新申请一个access token，当
+    refresh token过期之后需要重新登录
+"""
 
 class LoginView(APIView):
     """
-    API view for user login.
-
-    This view allows users to authenticate and obtain access and refresh tokens.
-
-    Methods:
-    - post: Authenticates the user and returns access and refresh tokens.
-
-    Attributes:
-    - permission_classes: A list of permission classes applied to the view.
+    登录视图，用于处理账号登录
+    api编号：01
+    路由：login/
+    描述：接受用户的账号与密码，由于使用auth数据库的原因将“username”作为账号，“first_name”作为中文名
+          验证通过后设置cookie：username，role，first_name，access，refresh
+          session：sessionid（django自动设置，没有显式写出），username，role，first_name
     """
-
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -78,13 +80,9 @@ class LoginView(APIView):
 
 class logoutView(APIView):
     """
-    A view for logging out a user.
-
-    Args:
-        APIView: The base class for API views.
-
-    Returns:
-        Response: A response indicating the success of the logout operation.
+    注销视图，用于注销账号
+    路由：logout/
+    api编号：02
     """
     permission_classes = [IsAuthenticated]
 
@@ -95,7 +93,9 @@ class logoutView(APIView):
 
 class TokenRefreshView(APIView):
     """
-    View for refreshing access token using refresh token.
+    access token续期视图，用于access token续期
+    路由：refresh/
+    api编号：03
     """
     permission_classes = [AllowAny]
 
@@ -120,13 +120,23 @@ class UserSerializers(serializers.ModelSerializer):
 
 
 class UserView(APIView):
-    """_summary_
-    user operations, with different permissions
-    """
+    
     permission_classes = [IsAuthenticated]
 
-    # 获取用户信息
+    
     def get(self, request, *args, **kwargs):
+        """
+        获取用户信息 username，email，first_name
+        1. 获取单个用户信息
+        权限：student只可以查看自己的信息，teacher与administrator可以查看所有用户信息
+        路由：home/user/<int:username>/
+        api编号：04
+        
+        2. 获取所有用户信息
+        权限：teacher，administrator
+        路由：home/user/
+        api编号：05
+        """
         username = kwargs.get('username')
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if username:
@@ -154,8 +164,14 @@ class UserView(APIView):
             else:
                 return Response({"error": "You don't have permission to view user"}, status=status.HTTP_403_FORBIDDEN)
 
-    # 修改用户密码
-    def put(self, request, *args, **kwargs):  # 修改密码
+   
+    def put(self, request, *args, **kwargs): 
+        """
+        修改用户密码
+        权限：teacher，student只能修改自己的密码，administrator可以修改所有人的密码（但还是需要填写old_password字段，可以乱填）
+        路由：home/user/<int:username>/
+        api编号：06
+        """
         this_user = User.objects.filter(username=request.session.get('username')).first()
         username = kwargs.get('username')
         user = User.objects.filter(username=username).first()
@@ -190,8 +206,14 @@ class UserView(APIView):
             return Response({"error": "You don't have permission to update this user"},
                             status=status.HTTP_403_FORBIDDEN)
 
-    # 创建用户
+
     def post(self, request, *args, **kwargs):
+        """
+        创建新用户
+        权限：administrator
+        路由：home/user/
+        api编号：07
+        """
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
             # 只有管理员可以创建用户
@@ -223,6 +245,12 @@ class UserView(APIView):
             # 删除用户
 
     def delete(self, request, *args, **kwargs):
+        """
+        删除用户
+        权限：administrator
+        路由：home/user/
+        api编号：08
+        """
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
             # 只有管理员可以删除用户

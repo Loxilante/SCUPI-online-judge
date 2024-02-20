@@ -7,39 +7,35 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User, Group
 from .models import Message, MessageRead
 
-
+"""班级系统
+    班级系统分为班级的增删改查，增删改为administrator权限，查根据角色不同可以得到的信息不同
+"""
 class CourseSerializer(serializers.Serializer):
     course_name = serializers.CharField(required=True, max_length=100)
     students_list = serializers.ListField(child=serializers.CharField(max_length=20))
 
 
 # 序列化器还有预留位
-
 class GroupSerializer(serializers.Serializer):
     course_name = serializers.CharField(source='name', max_length=100)
 
-
 # 序列化器还有预留位
-
 class UserSerializers(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = "__all__"
         fields = ['username', 'first_name']
 
-
-class MessageSerializer(serializers.Serializer):
-    level = serializers.CharField(max_length=10)
-    title = serializers.CharField(max_length=255)
-    content = serializers.CharField()
-    receiver = serializers.ListField(child=serializers.CharField(max_length=20), required=False, allow_null=True)
-    receive_group = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
-
-
 class CourseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        """
+        创建班级
+        权限：administrator
+        路由：home/
+        api编号：09
+        """
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
             # 只有管理员能创建班级
@@ -68,6 +64,12 @@ class CourseView(APIView):
             return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, *args, **kwargs):
+        """
+        删除班级
+        权限：administrator
+        路由：home/
+        编号：10
+        """
         this_user = User.objects.filter(username=request.session.get('username')).first()
         if this_user.groups.filter(name="administrator").exists():
             # 只有管理员可以删除课程
@@ -88,7 +90,12 @@ class CourseView(APIView):
             return Response({"error": "You don't have permission to delete course"}, status=status.HTTP_403_FORBIDDEN)
 
     def put(self, request, *args, **kwargs):
-        this_user = User.objects.filter(username=request.session.get('username')).first()
+        """
+        编辑班级成员
+        权限：administrator
+        路由：home/<str:coursename>/member/
+        api编号：11
+        """
         if request.session.get('role') == 'administrator':
             #只有管理员能编辑班级成员
 
@@ -109,15 +116,11 @@ class CourseView(APIView):
                     students_to_add = list(set(students_list) - set(old_student))
                     students_to_delete = list(set(old_student) - set(students_list))
 
-                    print("add:", students_to_add)
-                    print("delete:", students_to_delete)
-
                     for student in students_to_add:
                         if not User.objects.filter(username=student):
                             return Response({"success": "Students to add not exist"},
                                             status=status.HTTP_400_BAD_REQUEST)
-
-
+                            
                     for student in students_to_add:
                         user = User.objects.get(username=str(student))
                         course.user_set.add(user)
@@ -137,11 +140,21 @@ class CourseView(APIView):
             return Response({"error": "You don't have permission to create course"}, status=status.HTTP_403_FORBIDDEN)
 
     def get(self, request, *args, **kwargs):
+        """
+        1.获取班级中的成员
+        权限：student，teacher，administrator
+        路由：home/<str:coursename>/member/
+        api编号：12
+        
+        2.获取用户所加入的班级
+        权限：studnet，teacher，administrator（管理员可以获得系统中所有课程）
+        路由：home/
+        api编号：13
+        """
         course_name = kwargs.get('coursename')
+        this_user = User.objects.get(username=request.session.get('username'))
         if course_name is not None:
-            this_user = User.objects.get(username=request.session.get('username'))
             try:
-
                 course = Group.objects.get(name=course_name)
             except:
                 return Response({"error": "course not exist"}, status=status.HTTP_400_BAD_REQUEST)
@@ -151,37 +164,47 @@ class CourseView(APIView):
                 return Response({"error": "You don't have permission to visit this course"},
                                 status=status.HTTP_403_FORBIDDEN)
 
-
             course = Group.objects.get(name=course_name)
             students_list = course.user_set.values_list('username', flat=True)
             students = User.objects.filter(username__in=students_list)
             serializer = UserSerializers(students, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-        elif request.session.get('role') == 'administrator':
-            # 管理员有权查看所有课程
-            course_name = Group.objects.all()
-            course_name = course_name.exclude(name='administrator')
-            course_name = course_name.exclude(name='teacher')
-            course_name = course_name.exclude(name='student')
-            serializer = GroupSerializer(course_name, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            this_user = User.objects.get(username=request.session.get('username'))
-            course_name = this_user.groups.all()
+            # 管理员有权查看所有课程,teacher和student只能查看自己所在的课程
+            course_name = Group.objects.all() if request.session.get('role') == 'administrator' else this_user.groups.all()
             course_name = course_name.exclude(name='administrator')
             course_name = course_name.exclude(name='teacher')
             course_name = course_name.exclude(name='student')
-
             serializer = GroupSerializer(course_name, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 #########################消息系统########################################
+"""消息系统
+    消息系统不是聊天室，其类似于邮件，可以实现用户的单对单，但对多信息的发送
+    
+    暂时没有接入权限系统
+"""
+class MessageSerializer(serializers.Serializer):
+    level = serializers.CharField(max_length=10)
+    title = serializers.CharField(max_length=255)
+    content = serializers.CharField()
+    receiver = serializers.ListField(child=serializers.CharField(max_length=20), required=False, allow_null=True)
+    receive_group = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
+
 class MessageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        """
+        1.获取用户发送的信息
+        路由： message/0/
+        api编号：14
+        
+        2.获取用户接收的信息
+        路由：message/1/
+        api编号：15
+        """
         received = bool(kwargs.get('received'))
         try:
             this_user = User.objects.get(username=request.session.get('username'))
@@ -213,6 +236,12 @@ class MessageView(APIView):
             return JsonResponse(message_set, safe=False, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
+        """
+        创建新信息
+        路由：message/
+        api编号：16
+        注意单发和群发body的不同之处，api文档中有说明
+        """
         serializer = MessageSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -272,6 +301,11 @@ class MessageView(APIView):
             return Response({"error": "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
+        """
+        修改信息为已读
+        路由：message/
+        api编号： 17
+        """
         try:
             this_user = User.objects.get(username=request.session.get('username'))
         except:
@@ -289,6 +323,11 @@ class MessageView(APIView):
         return Response({"success": "change is_read to True"}, status=status.HTTP_200_OK)
 
     def delete(self, request, *args, **kwargs):
+        """
+        删除信息
+        路由：message/
+        api编号：18
+        """
         try:
             message_id = request.data.get('message_id')
             this_message = Message.objects.get(id=message_id)

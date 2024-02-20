@@ -149,8 +149,8 @@ REST_FRAMEWORK = {
     }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=24), #jwt的有效期,上线前改为5分钟
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=48), #jwt的刷新有效期,上线前改为1天
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5), #jwt的有效期,上线前改为5分钟
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1), #jwt的刷新有效期,上线前改为1天
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     
