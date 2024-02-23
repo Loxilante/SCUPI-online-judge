@@ -18,7 +18,7 @@
 
 ## 二. 开发环境搭建（基于Windows本机环境）
 
-1. [官网下载并安装WampServer]([WampServer, la plate-forme de développement Web sous Windows - Apache, MySQL, PHP](https://www.wampserver.com/en/))可参考[bilibili视频]([WampServer视频教程_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1gJ411x7WT/?spm_id_from=333.337.search-card.all.click&vd_source=3ea11c6471f4ecd3b36df28586aea0fa))
+1. [官网下载并安装WampServer](https://www.wampserver.com/en/)可参考[bilibili视频](https://www.bilibili.com/video/BV1gJ411x7WT/?spm_id_from=333.337.search-card.all.click&vd_source=3ea11c6471f4ecd3b36df28586aea0fa)
 
 2. 初始化Mysql root密码，可参考以上bilibili视频
 
@@ -38,7 +38,7 @@
      python3 ./manage.py init_site
      ```
 
-5. [安装docker]([Docker Desktop: The #1 Containerization Tool for Developers | Docker](https://www.docker.com/products/docker-desktop/))并启动
+5. [安装docker](https://www.docker.com/products/docker-desktop/)并启动
 
 6. 安装WSL，以Ubuntu作为发行版，windows家庭版与专业版安装方式有区别，请根据自身系统版本上网查找
 
