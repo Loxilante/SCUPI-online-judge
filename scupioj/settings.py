@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 from datetime import timedelta
 
@@ -149,8 +149,8 @@ REST_FRAMEWORK = {
     }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5), #jwt的有效期,上线前改为5分钟
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1), #jwt的刷新有效期,上线前改为1天
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=5), #jwt的有效期,上线前改为5分钟
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14), #jwt的刷新有效期,上线前改为1天
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     
@@ -173,3 +173,6 @@ SIMPLE_JWT = {
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

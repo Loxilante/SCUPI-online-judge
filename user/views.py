@@ -102,9 +102,13 @@ class TokenRefreshView(APIView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get('refresh')
         token = RefreshToken(refresh_token)
-        return Response({
-            'access': str(token.access_token),
+
+        response = Response({
+            'access': str(token.access_token),  # 保留原有的返回数据
         }, status=status.HTTP_200_OK)
+
+        response.set_cookie('access', str(token.access_token), httponly=True)
+        return response
 
 
 class UserSerializers(serializers.ModelSerializer):

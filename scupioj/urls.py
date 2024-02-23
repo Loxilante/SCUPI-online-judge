@@ -18,7 +18,9 @@ from django.contrib import admin
 from django.urls import path, include
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView,MessageView
-from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView
+from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView, ImageView, RunCodeView
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,7 +39,9 @@ urlpatterns = [
     path('home/<str:coursename>/<str:assignmentname>/submit/', SubmissionView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/<int:problem_id>/<str:student>/', QuestionDetailView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/<int:problem_id>/', QuestionDetailView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/image/<int:problem_id>/', ImageView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getscore/',GetAssignmentScoreView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getscore/<str:student>/',GetAssignmentScoreView.as_view()),
-    path('home/<str:coursename>/<str:assignmentname>/getstuscore/<str:student>/', GetStuScoreView.as_view())
-]
+    path('home/<str:coursename>/<str:assignmentname>/getstuscore/<str:student>/', GetStuScoreView.as_view()),
+    path('runcode/', RunCodeView.as_view())
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

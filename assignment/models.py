@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
@@ -50,7 +52,16 @@ class CodeAnswer(models.Model):
     space_limit = models.IntegerField(default = 10000) #内存单位为kb
     score = models.IntegerField()
     
+class Image(models.Model):
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    name = models.CharField(max_length= 100)
+    image = models.ImageField(upload_to='images/')
     
-    
-    
+    def delete(self, *args, **kwargs):
+        # 删除文件系统中的文件
+        if self.image:
+            image_path = os.path.join(settings.MEDIA_ROOT, self.image.name)
+            if os.path.isfile(image_path):
+                os.remove(image_path)
+        super(Image, self).delete(*args, **kwargs)
     
