@@ -69,11 +69,11 @@ class LoginView(APIView):
             'first_name':user.first_name,
         }, status=status.HTTP_200_OK)
 
-        response.set_cookie('username', user.username)
-        response.set_cookie('role', role)
-        response.set_cookie('first_name',quote(user.first_name.encode('utf-8')))
-        response.set_cookie('access', refresh.access_token)
-        response.set_cookie('refresh', refresh)
+        response.set_cookie('username', user.username, samesite='None', secure=True)
+        response.set_cookie('role', role, samesite='None', secure=True)
+        response.set_cookie('first_name',quote(user.first_name.encode('utf-8')), samesite='None', secure=True)
+        response.set_cookie('access', refresh.access_token, samesite='None', secure=True)
+        response.set_cookie('refresh', refresh, samesite='None', secure=True)
 
         return response
 
@@ -107,7 +107,7 @@ class TokenRefreshView(APIView):
             'access': str(token.access_token),  # 保留原有的返回数据
         }, status=status.HTTP_200_OK)
 
-        response.set_cookie('access', str(token.access_token), httponly=True)
+        response.set_cookie('access', str(token.access_token), httponly=True, samesite='None', secure=True)
         return response
 
 
@@ -268,6 +268,3 @@ class UserView(APIView):
             return Response({"success": "User deleted successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "You don't have permission to delete user"}, status=status.HTTP_403_FORBIDDEN)
-
-
-

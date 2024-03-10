@@ -56,6 +56,27 @@ class AssignmentView(APIView):
                 return Response(status=status.HTTP_404_NOT_FOUND)
             assignments = course.assignments.all()
             serializer = AssignmentSerializer(assignments, many=True)
+            
+            counter = 0
+            for assignment_info in serializer.data:
+                this_assignment = course.assignments.get(name = assignment_info["name"])
+                problems = this_assignment.problems.all()
+                sum_score = 0
+                score_get = 0
+                for problem in problems:
+                    sum_score += problem.score
+                    
+                    if not problem.submission_set.filter(user=User.objects.get(username=request.session.get("username"))).exists():
+                        score_get +=0
+                    else:
+                        submission = problem.submission_set.filter(user=User.objects.get(username=request.session.get("username"))).order_by('-score').first()
+                        print(submission.score)
+                        if submission.score is not None:
+                            score_get+=submission.score
+                serializer.data[counter]['sum_score'] = sum_score
+                serializer.data[counter]['score_get'] = score_get
+                counter += 1
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         @is_teacher_or_administrator    
@@ -191,6 +212,21 @@ class ProblemView(APIView):
                 serializer = ProblemSerializer(problems, many=True)
             else:
                 serializer = ProblemStudentSerializer(problems, many=True)
+            
+            counter = 0    
+            for problem_info in serializer.data:
+                this_problem = Problem.objects.get(id=problem_info["id"])
+                if not this_problem.submission_set.filter(user=User.objects.get(username=request.session.get("username"))).exists():
+                        score_get =0
+                else:
+                    submission = this_problem.submission_set.filter(user=User.objects.get(username=request.session.get("username"))).order_by('-score').first()
+                    print(submission.score)
+                    if submission.score is not None:
+                        score_get =submission.score
+                
+                serializer.data[counter]["score_get"] = score_get
+                counter += 1
+                            
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         
@@ -942,10 +978,3 @@ class RunCodeView(APIView):
                              'output':json_data["Output"],
                              'run_time':json_data["Runtime"],
                              'run_space':json_data["Runspace"]},status = status.HTTP_200_OK)
-
-            
-        
-        
-        
-            
-            
