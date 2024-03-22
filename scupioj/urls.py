@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from .view import rootView
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView,MessageView
 from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView, ImageView, RunCodeView
@@ -23,6 +24,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 urlpatterns = [
+    path('', rootView),
     path('admin/', admin.site.urls),
     path('login/', LoginView.as_view()),
     path('logout/', logoutView.as_view()),
@@ -44,4 +46,4 @@ urlpatterns = [
     path('home/<str:coursename>/<str:assignmentname>/getscore/<str:student>/',GetAssignmentScoreView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getstuscore/<str:student>/', GetStuScoreView.as_view()),
     path('runcode/', RunCodeView.as_view())
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] #+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) #静态文件路径，上线时注释

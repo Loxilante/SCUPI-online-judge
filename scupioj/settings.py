@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,7 +43,6 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders',
     'user',
     'course',
 
@@ -52,22 +52,21 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # 放在 CommonMiddleware 之前
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware', #注释掉也防止不了session验证时检查csrf
+    # 'django.middleware.csrf.CsrfViewMiddleware', # 防止session检查时csrf报错
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    
 ]
+
 
 ROOT_URLCONF = 'scupioj.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -153,8 +152,8 @@ REST_FRAMEWORK = {
     }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=5), #jwt的有效期,上线前改为5分钟
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=14), #jwt的刷新有效期,上线前改为1天
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=5), #jwt的有效期,上线前改为5分钟
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1), #jwt的刷新有效期,上线前改为1天
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     
@@ -184,9 +183,25 @@ SESSION_COOKIE_SECURE = True       # 因为SameSite=None，需要Secure
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # 允许本地开发服务器
+    "http://8.137.145.192",
+    "https://8.137.145.192",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'apifoxtoken',
+    'x-request-id',
+]
 

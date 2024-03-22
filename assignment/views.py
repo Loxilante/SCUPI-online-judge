@@ -199,19 +199,22 @@ class ProblemView(APIView):
             获取作业中的题目
             权限：all
             路由：home/<str:coursename>/<str:assignmentname>/
-            api编号：24
+            api编号：24, 44
             只有老师与管理员可以看到题目答案，学生要在作业截止后才能看到答案
             """
             try:
                 course = Group.objects.get(name=kwargs.get('coursename'))
                 assignment = course.assignments.get(name=kwargs.get('assignmentname'))
+            
+                problem_id = request.query_params.get('problem_id', None)
+                problems = assignment.problems.all() if problem_id is None else assignment.problems.get(id=problem_id)
             except:
                 return Response(status=status.HTTP_404_NOT_FOUND)
-            problems = assignment.problems.all()
+            
             if(request.session.get('role')  == 'administrator' or request.session.get('role')  == 'teacher' or assignment.due_date <= timezone.now()):
                 serializer = ProblemSerializer(problems, many=True)
             else:
-                serializer = ProblemStudentSerializer(problems, many=True)
+                serializer = ProblemStudentSerializer(problems, many=True) #学生要在作业截止后才能看到答案
             
             counter = 0    
             for problem_info in serializer.data:
@@ -929,6 +932,8 @@ class RunCodeView(APIView):
                     temp_file.write(files[2*(i+1)])
             
             #识别语言，不同语言处理方式不同,现在只开发了cpp和java
+            if request.data.get('space_limit') > 100000 or request.data.get('time_limit') > 100000:
+                return Response({"error":"don't allow space_limit or time_limit which is greater than 100000"}, status= status.HTTP_406_NOT_ACCEPTABLE )
 
             data = {
                 "dir": f"/{temp_dir_name}/",

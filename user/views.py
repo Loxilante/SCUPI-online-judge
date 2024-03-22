@@ -67,6 +67,7 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'role':role,
             'first_name':user.first_name,
+            'username': username,
         }, status=status.HTTP_200_OK)
 
         response.set_cookie('username', user.username, samesite='None', secure=True)
@@ -74,6 +75,7 @@ class LoginView(APIView):
         response.set_cookie('first_name',quote(user.first_name.encode('utf-8')), samesite='None', secure=True)
         response.set_cookie('access', refresh.access_token, samesite='None', secure=True)
         response.set_cookie('refresh', refresh, samesite='None', secure=True)
+        response.set_cookie('username', username, samesite='None', secure=True)
 
         return response
 
@@ -107,7 +109,7 @@ class TokenRefreshView(APIView):
             'access': str(token.access_token),  # 保留原有的返回数据
         }, status=status.HTTP_200_OK)
 
-        response.set_cookie('access', str(token.access_token), httponly=True, samesite='None', secure=True)
+        response.set_cookie('access', str(token.access_token), samesite='None', secure=True)
         return response
 
 
