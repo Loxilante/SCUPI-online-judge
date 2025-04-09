@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>作业评分表单</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f9fc;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .wrapper {
+      display: flex;
+      gap: 2rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .form-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      flex: 2;
+    }
+
+    .chat-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+      color: #444;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    button {
+      display: block;
+      margin: 2rem auto 0;
+      padding: 0.7rem 2rem;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    .success {
+      color: green;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- 左侧表单区域 -->
+    <div class="form-container">
+      <h2>作业评分表单</h2>
+      <form id="gradingForm">
+        <div class="form-group">
+          <label for="statement">Statement（必填）</label>
+          <textarea id="statement" name="Statement" placeholder="请输入任务描述..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="sample">Sample</label>
+          <textarea id="sample" name="Sample" placeholder="请输入样例代码或数据..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="explanation">Sample Explanation</label>
+          <textarea id="explanation" name="SampleExplanation" placeholder="解释样例内容..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="style">Style Criteria</label>
+          <textarea id="style" name="StyleCriteria">注意学生代码的一致性和层次性</textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="implement">Implement Criteria</label>
+          <textarea id="implement" name="ImplementCriteria">注意学生代码中的 (1)具体算法实现 (2)数据结构选择 (3)时间复杂度 (4)空间复杂度(次要)</textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="possible">Possible</label>
+          <textarea id="possible" name="Possible" placeholder="其他可能的思路、答案等..."></textarea>
+        </div>
+
+        <button type="submit">提交</button>
+        <div id="message" class="error"></div>
+        <div id="responseBox" style="display:none;"></div>
+      </form>
+    </div>
+
+    <!-- 右侧聊天框区域 -->
+    <div class="chat-container">
+      <form id="codeForm">
+        <div class="form-group">
+          <label for="code">Code</label>
+          <textarea id="code" name="Code" placeholder="请输入作业提问..."></textarea>
+        </div>
+        <button type="submit">提交2</button>
+        <div id="message2" class="error"></div>
+        <div id="responseBox2" style="display:none;"></div>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    // 左侧表单逻辑
+    document.getElementById("gradingForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const statement = document.getElementById("statement").value.trim();
+      const message = document.getElementById("message");
+      const responseBox = document.getElementById("responseBox");
+
+      if (!statement) {
+        message.textContent = "❗ Statement 是必填项，请填写后再提交。";
+        message.className = "error";
+        return;
+      }
+
+      message.textContent = "";
+      responseBox.style.display = "none";
+
+      const formData = new FormData(event.target);
+      const payload = {};
+      formData.forEach((val, key) => {
+        payload[key] = val.trim();
+      });
+
+      try {
+        message.textContent = "⏳ 提交中...";
+        const res = await fetch("http://localhost:8302/chatgpt/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        responseBox.textContent = JSON.stringify(result, null, 2);
+        responseBox.style.display = "block";
+        message.textContent = "✅ 提交成功！";
+        message.className = "success";
+      } catch (err) {
+        message.textContent = "❌ 提交失败：" + err.message;
+        message.className = "error";
+      }
+    });
+
+    // 右侧表单逻辑
+    document.getElementById("codeForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const code = document.getElementById("code").value.trim();
+        const message2 = document.getElementById("message2");
+        const responseBox2 = document.getElementById("responseBox2");
+
+        if (!code) {
+            message2.textContent = "❗ Code 不能为空";
+            message2.className = "error";
+            return;
+        }
+
+        message2.textContent = "";
+        responseBox2.style.display = "none";
+
+        try {
+            message2.textContent = "⏳ 提交中...";
+            const res = await fetch("http://localhost:8302/chatgpt/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({"Code": code})
+            });
+
+            const result = await res.json();
+            responseBox2.textContent = JSON.stringify(result, null, 2);
+            responseBox2.style.display = "block";
+            message2.textContent = "✅ 提交成功！";
+            message2.className = "success";
+        } catch (err) {
+            message2.textContent = "❌ 提交失败: " + err.message;
+            message2.className = "error";
+        }
+
+    });
+  </script>
+</body>
+</html>

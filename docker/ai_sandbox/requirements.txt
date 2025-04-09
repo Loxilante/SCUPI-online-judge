@@ -1,0 +1,6 @@
+Django>=3.2
+djangorestframework>=3.12
+psutil>=5.8
+django-cors-headers>=3.14
+openai
+uwsgi
