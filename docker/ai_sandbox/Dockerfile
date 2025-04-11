@@ -8,4 +8,4 @@ RUN pip install -r requirements.txt
 
 RUN python manage.py migrate
 
-CMD ["uwsgi", "--http-socket", "0.0.0.0:80", "--file", "/code/gpt/wsgi.py"]
+CMD ["uwsgi", "--http-socket", "0.0.0.0:80", "--file", "/code/ai_sandbox/wsgi.py"]
