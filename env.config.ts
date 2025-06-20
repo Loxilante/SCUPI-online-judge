@@ -4,7 +4,7 @@
  * @param env The current env
  */
 export function createServiceConfig(env: Env.ImportMeta) {
-  const mockURL = 'https://linziyang.top';
+  const mockURL = 'https://ojapi.loxilante.uno';
 
   const serviceConfigMap: App.Service.ServiceConfigMap = {
     dev: {

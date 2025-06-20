@@ -4,18 +4,18 @@ import { ref } from 'vue';
 import { NButton, NPopconfirm } from 'naive-ui';
 import { useBoolean } from '@sa/hooks';
 import { RouterLink } from 'vue-router';
-import { getCouseList } from '@/service/api';
+import { getCourseList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
 import { useTable } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import { removeCourse } from '@/service/api/course';
 //@ts-ignore
-import MenuOperateDrawer, { type OperateType } from './modules/opertate.vue';
+import MenuOperateDrawer, { type OperateType } from './modules/operate.vue';
 const appStore = useAppStore();
 const { bool: drawerVisible, setTrue: openDrawer } = useBoolean();
 
-const { columns, filteredColumns, data, loading, getData } = useTable<any, typeof getCouseList, 'index' | 'operate'>({
-  apiFn: getCouseList,
+const { columns, filteredColumns, data, loading, getData } = useTable<any, typeof getCourseList, 'index' | 'operate'>({
+  apiFn: getCourseList,
   transformer: res => {
     const list: any = res.data || [];
     return {

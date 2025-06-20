@@ -75,8 +75,9 @@ export const useResolve = ()=>{
     };
   }
   const handleProblemDetail = (item:any)=>{
+    if (!item) return {};
     const reg = /(\^stem)([\s\S]*)(stem\$)/gi;
-    const modelDef: any = createDefaultModel();
+    const modelDef = { ...item };
     Object.keys(modelDef).forEach(key => {
       if (key === 'content_problem') {
         const content = item[key].replace(reg, '').replace('<-&', '').replace('&->', '');
@@ -128,7 +129,7 @@ export const useResolve = ()=>{
   const getImageList = async ({course_name, homework_name, id}:{course_name:any,homework_name:any,id:any})=>{
     let res = await viewImage(course_name, homework_name, id)
     let imageList = res.data.map((item: any) => ({
-      file: `https://linziyang.top/${item.image}`,
+      file: `https://ojapi.loxilante.uno/${item.image}`,
       name: item.name,
       id: item.id,
       status: 'finished'

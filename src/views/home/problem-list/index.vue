@@ -14,12 +14,13 @@ import { removeQuestion } from '@/service/api/course';
 import MenuOperateDrawer, { type OperateType } from './modules/operate.vue';
 //@ts-ignore
 import caseDialog from './modules/case-dialog.vue'
+import aiDialog from './modules/ai-dialog.vue'
 const appStore = useAppStore();
 const { bool: drawerVisible, setTrue: openDrawer } = useBoolean();
 const { bool: caseDrawerVisible, setTrue: caseOpenDrawer } = useBoolean();
+const { bool: aiDrawerVisible, setTrue: aiOpenDrawer } = useBoolean();
 const route = useRoute();
 const homeworkDetail = ref({
-  allow_ai: false,
   created_time: '',
   description: '',
   due_date: '',
@@ -28,6 +29,26 @@ const homeworkDetail = ref({
   sum_score: 0
 });
 const remainTime = ref('');
+
+const aiFormData = ref({
+  sample: '',
+  sample_explanation: '',
+  style_criteria: '',
+  implement_criteria: '',
+  additional: ''
+});
+const AIOpenDrawer = (row: any) => {
+  editingData.value = row;
+  aiFormData.value = {
+    sample: row.sample || '',
+    sample_explanation: row.sample_explanation || '',
+    style_criteria: row.style_criteria || '',
+    implement_criteria: row.implement_criteria || '',
+    additional: row.additional || ''
+  };
+  aiOpenDrawer();
+  console.log(aiDrawerVisible.value);
+};
 
 const { columns, filteredColumns, data, loading, getData } = useTable<
   any,
@@ -107,6 +128,13 @@ const { columns, filteredColumns, data, loading, getData } = useTable<
           }}>
             {'Case'}
           </NButton>}
+          {row.allow_ai && (
+            <NButton v-p="level2" type="success" ghost size="small" onClick={() => {
+              AIOpenDrawer(row);
+            }}>
+              {'AI'}
+            </NButton>
+          )}
           <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
             {{
               default: () => $t('common.confirmDelete'),
@@ -208,6 +236,9 @@ async function handleDelete(id: string) {
         :course_name="route.query.course_name" :operate-type="operateType" :row-data="editingData"
         @submitted="getData" />
       <caseDialog v-model:visible="caseDrawerVisible" :homework_name="route.query.homework_name"
+        :course_name="route.query.course_name" :operate-type="operateType" :row-data="editingData"
+        @submitted="getData" />
+      <aiDialog v-model:visible="aiDrawerVisible" :homework_name="route.query.homework_name"
         :course_name="route.query.course_name" :operate-type="operateType" :row-data="editingData"
         @submitted="getData" />
     </NCard>

@@ -28,4 +28,5 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   "home_problem-list": () => import("@/views/home/problem-list/index.vue"),
   home_records: () => import("@/views/home/records/index.vue"),
   "home_submission-detail": () => import("@/views/home/submission-detail/index.vue"),
+  "home_settings": () => import("@/views/home/settings/index.vue"),
 };

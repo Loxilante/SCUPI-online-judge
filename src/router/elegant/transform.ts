@@ -160,6 +160,7 @@ const routeMap: RouteMap = {
   "home_problem-list": "/home/problem-list",
   "home_records": "/home/records",
   "home_submission-detail": "/home/submission-detail",
+  "home_settings": "/home/settings",
   "login": "/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?"
 };
 

@@ -15,6 +15,7 @@ import {
   updateProblemByHomework,
   uploadImage
 } from '@/service/api/course';
+import { getTokens } from '@/service/api/ai';
 // @ts-ignore
 import List from './List.vue';
 // @ts-ignore
@@ -73,6 +74,8 @@ const options = ref([
   }
 ]);
 
+const userTokenOptions = ref([]);
+
 const visible = defineModel<boolean>('visible', {
   default: false
 });
@@ -96,6 +99,15 @@ type Model = {
   stem: string;
   response_limit: any;
   non_programming_answer: string;
+  allow_ai: boolean;
+  selected_token: number | null;
+  stylescore: number | null;
+  implescore: number | null;
+  sample: string;
+  sample_explanation: string;
+  style_criteria: string;
+  implement_criteria: string;
+  additional: string;
 };
 
 const model: Model = reactive(createDefaultModel());
@@ -110,7 +122,16 @@ function createDefaultModel(): Model {
     type: 'text',
     stem: '',
     response_limit: '',
-    non_programming_answer: ''
+    non_programming_answer: '',
+    allow_ai: false,
+    selected_token: null,
+    implescore: null,
+    stylescore: null,
+    sample: '',
+    sample_explanation: '',
+    style_criteria: '',
+    implement_criteria: '',
+    additional: '',
   };
 }
 
@@ -132,6 +153,7 @@ function handleUpdateModelWhenEdit() {
 
   if (props.operateType === 'edit' && props.rowData) {
     const modelDef: any = handleProblemDetail(props.rowData)
+    modelDef.allow_ai = Boolean(modelDef.allow_ai)
     Object.assign(model, modelDef);
     id.value = props.rowData.id;
     nextTick(()=>{
@@ -158,7 +180,7 @@ async function handleSubmit() {
         content_problem: resolveItem?.content_problem,
         non_programming_answer: resolveItem?.non_programming_answer
       }
-    ]).then(({ error, data }) => {
+    ]).then(async ({ error, data }) => {
       if (!error) {
         window.$message?.success($t('Add Success!'));
         if (imageList.value.length > 0) {
@@ -181,7 +203,7 @@ async function handleSubmit() {
         non_programming_answer: resolveItem?.non_programming_answer,
         id: id.value
       }
-    ]).then(({ error }) => {
+    ]).then(async ({ error }) => {
       if (!error) {
         window.$message?.success($t('Update Success!'));
         let result:any = imageList.value.filter((item:any)=>item.status==='pending')
@@ -220,6 +242,18 @@ watch(visible, () => {
   if (visible.value) {
     handleUpdateModelWhenEdit();
     restoreValidation();
+
+    getTokens().then(({ data, error }) => {
+      if (!error && data) {
+        // 将从API返回的数据格式化为 NSelect 需要的 { label, value } 格式
+        userTokenOptions.value = data.map(token => ({
+          label: `${token.platform} - ${token.name || 'Default'}`, // 例如 "DeepSeek - 我的备用Key"
+          value: token.id // value 应该是 token 的唯一ID
+        }));
+      }
+    });
+  } else {
+    userTokenOptions.value = [];
   }
 });
 </script>
@@ -275,6 +309,12 @@ watch(visible, () => {
         </NFormItem>
         <NFormItem label="Response Limit" path="response_limit">
           <NInput v-model:value="model.response_limit" placeholder="Please Enter Response Limit" />
+        </NFormItem>
+        <NFormItem label="Allow AI" path="allow_ai">
+          <NCheckbox v-model:checked="model.allow_ai" placeholder="Please Enter allow_ai" />
+        </NFormItem>
+        <NFormItem v-if="model.allow_ai" label="Select AI Token" path="selected_token">
+          <NSelect v-model:value="model.selected_token" :options="userTokenOptions" placeholder="Please select a token" clearable/>
         </NFormItem>
       </NForm>
       <template #footer>

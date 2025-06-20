@@ -12,5 +12,5 @@ export async function fetchGetUserRoutes() {
  * @param routeName route name
  */
 export function fetchIsRouteExist(routeName: string) {
-  return request<boolean>({ url: '/route/isRouteExist', params: { routeName } });
+  return Promise.resolve(true); // request<boolean>({ url: '/route/isRouteExist', params: { routeName } });
 }

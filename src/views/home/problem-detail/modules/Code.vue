@@ -248,4 +248,13 @@ const handleClose = (name: string) => {
 .submit-btn {
   margin-right: 64px;
 }
+
+.right :deep(.n-tabs-nav) {
+  overflow-x: auto;
+}
+
+.right :deep(.n-tabs-nav-scroll-content) {
+  display: flex;
+  flex-wrap: nowrap;
+}
 </style>

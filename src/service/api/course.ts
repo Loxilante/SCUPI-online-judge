@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { request } from '../request';
-export function getCouseList() {
+export function getCourseList() {
   return request<any>({
     url: '/home/',
     method: 'get'
@@ -32,7 +32,6 @@ export function addHomeworkToCourse(
     name: string;
     description: string;
     due_date: any;
-    allow_ai: boolean;
   }
 ) {
   return request<any>({
@@ -55,7 +54,6 @@ export function updateHomeworkToCourse(
     name: string;
     description: string;
     due_date: any;
-    allow_ai: boolean;
   }
 ) {
   return request<any>({
@@ -275,6 +273,7 @@ export function removeCodeCase(data: any, delete_id: any) {
     data: { delete_id: [delete_id] }
   });
 }
+
 export function viewSubmissionRecord(data: any) {
   return request<any>({
     url: `/home/${data.course_name}/${data.homework_name}/${data.id}/${data.username}/`,

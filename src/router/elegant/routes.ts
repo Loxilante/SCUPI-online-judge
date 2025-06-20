@@ -110,6 +110,14 @@ export const generatedRoutes: any[] = [{
       title: 'home_submission-detail',
       i18nKey: 'route.home_submission-detail'
     }
+  }, {
+    name: 'home_settings',
+    path: '/home/settings',
+    component: 'view.home_settings',
+    meta: {
+      title: 'home_settings',
+      i18nKey: 'route.home_settings',
+    }
   }]
 }, {
   name: 'login',

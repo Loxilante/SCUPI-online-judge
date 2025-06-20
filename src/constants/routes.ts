@@ -138,6 +138,21 @@ const routes = {
             roles: ['administrator', 'teacher', 'student'],
             title: 'Submission Detail'
           }
+        },
+        {
+          id: 17,
+          parentId: 16,
+          children: null,
+          name: 'home_settings',
+          path: '/home/settings',
+          component: 'view.home_settings',
+          meta: {
+            title: "Settings",
+            icon: 'ant-design:setting-outlined',
+            order: 1,
+            hideInMenu: true,
+            roles: ['administrator', 'teacher', 'student']
+          }
         }
       ],
       name: 'home',

@@ -216,6 +216,7 @@ const handlePositiveClick = () => {
 }
 .header-comment{
   color: #fff;
+  white-space: pre-wrap;
 }
 .score {
   display: flex;

@@ -50,7 +50,6 @@ type Model = {
   name: string;
   description: string;
   due_date: any;
-  allow_ai: boolean;
 };
 
 const model: Model = reactive(createDefaultModel());
@@ -60,7 +59,6 @@ function createDefaultModel(): Model {
     name: '',
     description: '',
     due_date: null,
-    allow_ai: false
   };
 }
 
@@ -97,7 +95,6 @@ async function handleSubmit() {
     addHomeworkToCourse(props.course_name, {
       ...model,
       due_date: new Date(model.due_date),
-      allow_ai: model.allow_ai
     }).then(({ error }) => {
       if (!error) {
         window.$message?.success($t('Add Success!'));
@@ -110,7 +107,6 @@ async function handleSubmit() {
     updateHomeworkToCourse(props.course_name, {
       ...model,
       due_date: new Date(model.due_date),
-      allow_ai: model.allow_ai
     }).then(({ error }) => {
       if (!error) {
         window.$message?.success($t('Update Success!'));
@@ -141,9 +137,6 @@ watch(visible, () => {
         </NFormItem>
         <NFormItem label="Due Date" path="due_date">
           <NDatePicker v-model:value="model.due_date" placeholder="Please Enter Due Date" />
-        </NFormItem>
-        <NFormItem label="Allow AI" path="allow_ai">
-          <NCheckbox v-model:checked="model.allow_ai" placeholder="Please Enter allow_ai" />
         </NFormItem>
       </NForm>
       <template #footer>

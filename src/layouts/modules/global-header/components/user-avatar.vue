@@ -26,9 +26,9 @@ function loginOrRegister() {
 const options = computed(() => {
   const opts: any[] = [
     {
-      label: 'password',
-      key: 'changePassword',
-      icon: SvgIconVNode({ icon: 'mdi:password', fontSize: 18 })
+      label: 'settings',
+      key: 'home_settings',
+      icon: SvgIconVNode({ icon: 'ant-design:setting-outlined', fontSize: 18 })
     },
     {
       type: 'divider',
@@ -63,8 +63,6 @@ function logout() {
 function handleDropdown(key: any) {
   if (key === 'logout') {
     logout();
-  }else if(key == 'changePassword'){
-    drawerVisible.value = true
   } else {
     routerPushByKey(key);
   }
