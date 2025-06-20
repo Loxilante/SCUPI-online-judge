@@ -40,10 +40,10 @@ class javaView(APIView):
             # 构建编译命令
             compile_command = ["javac"] + java_files
             # 执行编译命令
-            subprocess.run(compile_command, check=True)
+            subprocess.run(compile_command, capture_output=True, text=True, check=True)
 
         except subprocess.CalledProcessError as cpe_error:
-            return Response({"error":f"CE:{cpe_error}"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":f"CE:{cpe_error}", "details":cpe_error.stderr},status=status.HTTP_400_BAD_REQUEST)
     
         try:
             output = subprocess.check_output([os.getcwd()+"/judge/excuting.exe", source_dir, args, stdin_data, str(time_limit_in_ms), str(limit_in_kb)], stderr=subprocess.STDOUT, text=True)

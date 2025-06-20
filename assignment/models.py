@@ -4,13 +4,31 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 
+class Token(models.Model):
+    PLATFORM_CHOICES = [
+        ('ChatGPT', 'ChatGPT'),
+        ('DeepSeek', 'DeepSeek'),
+        ('Gemini', 'Gemini'),
+        ('Claude', 'Claude'),
+        ('Grok', 'Grok'),
+        ('Doubao', 'Doubao'),
+        ('KIMI', 'KIMI'),
+        ('Qwen', 'Qwen'),
+        ('Hunyuan', 'Hunyuan')
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_tokens')
+    name = models.CharField(max_length=255)
+    token = models.TextField()
+    platform = models.CharField(max_length=100, choices=PLATFORM_CHOICES)
+    created_time = models.DateTimeField(auto_now_add=True) 
+
 class Assignment(models.Model):
     course = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='assignments')
     name = models.CharField(max_length=255)
     description = models.TextField()
     created_time = models.DateTimeField(default=timezone.now)
     due_date = models.DateTimeField()
-    allow_ai = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -34,14 +52,29 @@ class Problem(models.Model):
     response_limit = models.IntegerField(null=True, blank=True)
     non_programming_answer = models.TextField(null=True, blank=True)
     
-class Submission(models.Model):
+    allow_ai = models.BooleanField(default=False)
+    selected_token = models.ForeignKey(Token, on_delete=models.SET_NULL, null=True, blank=True)
+    # prompt相关
+    sample = models.TextField(null=True, blank=True)
+    sample_explanation = models.TextField(null=True, blank=True)
+    style_criteria = models.TextField(null=True, blank=True)
+    implement_criteria = models.TextField(null=True, blank=True)
+    additional = models.TextField(null=True, blank=True)
 
+class AIHistory(models.Model):
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE, related_name='ai_histories')
+    history = models.TextField(null=True, blank=True) 
+
+class Submission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     submit_time = models.DateTimeField(default=timezone.now)
     content_answer = models.TextField()
     score = models.IntegerField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
+    # AI判题得分
+    stylescore = models.IntegerField(null=True, blank=True)
+    implescore = models.IntegerField(null=True, blank=True)
     
 class CodeAnswer(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)

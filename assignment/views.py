@@ -19,7 +19,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
-from .models import Assignment, Problem, Submission, CodeAnswer, Image
+from .models import Assignment, Problem, Submission, CodeAnswer, Image, Token
 import re
 from django.utils import timezone
 import tempfile
@@ -33,7 +33,7 @@ from .utils import is_in_group, is_teacher_or_administrator
 class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment
-        fields = ['name', 'description', 'created_time', 'due_date', 'allow_ai']
+        fields = ['name', 'description', 'created_time', 'due_date', ]
         extra_kwargs = {
             'created_time': {'read_only': True},
         }
@@ -97,6 +97,7 @@ class AssignmentView(APIView):
                 return Response({'error':'assignment exist'},status=status.HTTP_400_BAD_REQUEST)
         
             serializer = AssignmentSerializer(data=request.data)
+            print(request.data)
             if serializer.is_valid():
                 serializer.save(course=course) 
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -154,7 +155,8 @@ class AssignmentView(APIView):
 class ProblemSerializer(serializers.ModelSerializer):
         class Meta:
             model = Problem
-            fields = ['id', 'title', 'content_problem', 'score', 'type', 'response_limit', 'non_programming_answer']
+            fields = ['id', 'title', 'content_problem', 'score', 'type', 'response_limit', 'non_programming_answer', 
+                      'allow_ai', 'selected_token', 'sample', 'sample_explanation', 'style_criteria', 'implement_criteria', 'additional']
             extra_kwargs= {
             'id':{'read_only':True},
         }
@@ -187,10 +189,20 @@ class ProblemView(APIView):
             except:
                 return Response(status=status.HTTP_404_NOT_FOUND) #检查班级与作业是否存在
             
+            #检查token属于当前登录用户
+            for problem in request.data:
+                token_id = problem.get('selected_token')
+                if token_id:
+                    try:
+                        Token.objects.get(id=token_id, user=request.user)
+                    except Token.DoesNotExist:
+                        return Response(status=status.HTTP_401_UNAUTHORIZED)
+            
             serializer = ProblemSerializer(data=request.data, many=True)
             if serializer.is_valid():
                 serializer.save(assignment=assignment)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
      
         @is_in_group
@@ -207,7 +219,7 @@ class ProblemView(APIView):
                 assignment = course.assignments.get(name=kwargs.get('assignmentname'))
             
                 problem_id = request.query_params.get('problem_id', None)
-                problems = assignment.problems.all() if problem_id is None else assignment.problems.get(id=problem_id)
+                problems = assignment.problems.all() if problem_id is None else assignment.problems.filter(id=problem_id)
             except:
                 return Response(status=status.HTTP_404_NOT_FOUND)
             
@@ -256,8 +268,17 @@ class ProblemView(APIView):
                     return Response(status=status.HTTP_400_BAD_REQUEST)
                 if not assignment.problems.filter(id=problem_id).exists(): #判断题目是否在作业中
                     return Response(status=status.HTTP_404_NOT_FOUND)
+
                 this_problem = assignment.problems.get(id=problem_id)
                 serializer = ProblemSerializer(this_problem, data=problem, partial=True)
+                token_id = problem.get('selected_token')
+
+                if (token_id):
+                    try:
+                        Token.objects.get(id=token_id, user=request.user)
+                    except Token.DoesNotExist:
+                        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
                 if serializer.is_valid():
                     serializer.save()
                     updated_problems.append(serializer.data)
@@ -378,7 +399,6 @@ class CodeAnswerView(APIView):
     
         permission_classes = [IsAuthenticated]       
         
-        
         @is_teacher_or_administrator    
         @is_in_group
         def post(self,request, *args, **kwargs): #布置代码作业答案
@@ -496,6 +516,201 @@ class CodeAnswerView(APIView):
                 code_answer.delete()
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
+            
+################### TOKEN相关 #####################################
+
+class TokenSerializer(serializers.ModelSerializer):
+
+    token_display = serializers.SerializerMethodField()
+    created_time = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+
+    def get_token_display(self, obj):
+        """
+        token只显示开头5个字符结尾4个字符
+        """
+        if obj.token and len(obj.token) > 8:
+            return f"{obj.token[:5]}...{obj.token[-4:]}"
+        return "Invalid Token"
+    
+    class Meta:
+        model = Token
+        fields = ['id', 'name', 'token', 'platform', 'token_display', 'created_time']
+        extra_kwargs = {
+            'token': {'write_only': True}
+        }
+
+        
+
+class TokenView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    @is_teacher_or_administrator
+    def get(self, request, *args, **kwargs):
+        """
+        获取当前登录用户的所有Token
+        """
+        tokens = Token.objects.filter(user=request.user)
+        serializer = TokenSerializer(tokens, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @is_teacher_or_administrator
+    def post(self, request, *args, **kwargs):
+        """
+        为当前登录用户添加一个新Token
+        """
+        serializer = TokenSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class TokenDetailView(APIView):
+    """
+    处理单个Token的更新和删除
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id, user):
+        try:
+            return Token.objects.get(id=id, user=user)
+        except Token.DoesNotExist:
+            return None
+
+    @is_teacher_or_administrator
+    def get(self, request, id, *args, **kwargs):
+        """
+        获取单个Token信息
+        """
+        token = self.get_object(id, request.user)
+        if token is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = TokenSerializer(token)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @is_teacher_or_administrator
+    def put(self, request, id, *args, **kwargs):
+        """
+        更新单个Token信息
+        """
+        password = request.data.get('password')
+
+        if not password:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        if not request.user.check_password(password):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        token = self.get_object(id, request.user)
+        if token is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = TokenSerializer(instance=token, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @is_teacher_or_administrator
+    def delete(self, request, id, *args, **kwargs):
+        """
+        根据URL中id删除单个Token
+        """
+
+        password = request.data.get('password')
+        if not password:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        if not request.user.check_password(password):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        token = self.get_object(id, request.user)
+        if token is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        token.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+################### AI相关API #####################################
+
+class ProblemAISettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Problem
+        fields = ['sample', 'sample_explanation', 'style_criteria', 'implement_criteria', 'additional']
+
+class ProblemAISettingsView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    @is_teacher_or_administrator
+    @is_in_group
+    def get(self, request, *args, **kwargs):
+        """
+        获取一个题目的AI设置
+        路由: home/<str:coursename>/<str:assignmentname>/ai/<int:problem_id>/
+        """
+        try:
+            problem = Problem.objects.get(id=kwargs.get('problem_id'))
+        except Problem.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ProblemAISettingsSerializer(problem)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @is_teacher_or_administrator
+    @is_in_group
+    def put(self, request, *args, **kwargs):
+        """
+        更新一个题目的AI设置 (主要更新方法)
+        路由: home/<str:coursename>/<str:assignmentname>/ai/<int:problem_id>/
+        """
+        try:
+            problem = Problem.objects.get(id=kwargs.get('problem_id'))
+        except Problem.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ProblemAISettingsSerializer(problem, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()  # 保存到数据库
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @is_teacher_or_administrator
+    @is_in_group
+    def post(self, request, *args, **kwargs):
+        """
+        处理POST请求，直接调用PUT方法来更新AI设置。
+        路由: home/<str:coursename>/<str:assignmentname>/ai/<int:problem_id>/
+        """
+        return self.put(request, *args, **kwargs)
+
+    @is_teacher_or_administrator
+    @is_in_group
+    def delete(self, request, *args, **kwargs):
+        """
+        清空一个题目的AI设置
+        路由: home/<str:coursename>/<str:assignmentname>/ai/<int:problem_id>/
+        """
+        try:
+            problem = Problem.objects.get(id=kwargs.get('problem_id'))
+        except Problem.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        problem.sample = ""
+        problem.sample_explanation = ""
+        problem.style_criteria = ""
+        problem.implement_criteria = ""
+        problem.additional = ""
+        
+        problem.save()
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 ###################答题与判题操作###################################
 
@@ -524,6 +739,10 @@ class SubmissionView(APIView):
                 
             if(problem.response_limit is not None and Submission.objects.filter(user=this_user,problem=problem).count() >= problem.response_limit):
                 return Response({"error":"You've exceeded the limit of answers"},status=status.HTTP_400_BAD_REQUEST)
+            
+            result = {
+                "id":request.data.get('id'),
+            }
                
             if problem.type == "choice":
                 content_answer = request.data.get('content_answer')
@@ -543,49 +762,29 @@ class SubmissionView(APIView):
                 submission.user = this_user
                 submission.problem = problem
                 submission.save()
-                return Response({
-                    "id":request.data.get('id'),
-                    "score":score
-                    }, status=status.HTTP_200_OK)
+                result["score"] = score
+
             elif problem.type == "text":
                 score = None
                 comment = None
                 content_answer = request.data.get('content_answer')
                 
-                if problem.assignment.allow_ai == True:
-                    #ai 判题未开发
-                    submission = Submission()
-                    submission.content_answer = content_answer
-                    submission.score = score
-                    submission.user = this_user
-                    submission.problem = problem
-                    submission.comment = "ai grading undeveloped"
-                    submission.save()
-                    return Response({
-                    "id":request.data.get('id'),
-                    "score":score,
-                    "comment":comment
-                    }, status=status.HTTP_200_OK)
-                else:
-                    submission = Submission()
-                    submission.content_answer = content_answer
-                    submission.score = score
-                    submission.user = this_user
-                    submission.problem = problem
-                    submission.comment = "Wait for grading"
-                    submission.save()
-                    return Response({
-                    "id":request.data.get('id'),
-                    "score":score,
-                    "comment":"Wait for grading"
-                    }, status=status.HTTP_200_OK)
+                submission = Submission()
+                submission.content_answer = content_answer
+                submission.score = score
+                submission.user = this_user
+                submission.problem = problem
+                submission.comment = "Wait for grading"
+                submission.save()
+                result["score"] = score
+                result["comment"] = "Wait for grading"
                    
             else:
                 score = 0
                 comment = ""
                 content_answer = request.data.get('content_answer')
                 files = re.findall(r"<-&(.*?)&->", content_answer, re.DOTALL)
-            
+
                 # 创建临时目录
                 with tempfile.TemporaryDirectory(dir=os.getcwd()+"/files/") as temp_dir:
                     temp_dir_name = os.path.basename(temp_dir)
@@ -608,7 +807,7 @@ class SubmissionView(APIView):
                             "stdin_data":codeanswer.standard_input if codeanswer.standard_input is not None else ""
                         }
 
-                        # 准备请求头
+                        # 准备请求头    
                         headers = {
                             'Content-Type': 'application/json'
                         }
@@ -637,32 +836,168 @@ class SubmissionView(APIView):
                             print("An error occurred:", e)
                         finally:
                             conn.close()
+
+                        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+                        # print(json_data)
+
                         #检验输出
                         if status_code != 200:
                             comment += json.dumps(json_data, indent=4)+"\n"
-                            continue
-                        
-                        if json_data["Status"] != "0":
-                            comment += json_data["Runtime"]+" "+json_data["Runspace"]+" "+json_data["Output"]+"\n"
-                        elif json_data["Output"].strip() != codeanswer.standard_output.strip():
-                            comment +=  json_data["Runtime"]+" "+json_data["Runspace"]+" "+"Output false\n"
                         else:
-                            score += codeanswer.score
-                            comment +=  json_data["Runtime"]+" "+json_data["Runspace"]+" "+"Output true\n"
+                            if json_data["Status"] != "0":
+                                comment += json_data["Runtime"]+" "+json_data["Runspace"]+" "+json_data["Output"]+"\n"
+                            elif json_data["Output"].strip() != codeanswer.standard_output.strip():
+                                comment +=  json_data["Runtime"]+" "+json_data["Runspace"]+" "+"Output false\n"
+                            else:
+                                score += codeanswer.score
+                                comment +=  json_data["Runtime"]+" "+json_data["Runspace"]+" "+"Output true\n"
+                    
+                    s_match = 0
+                    i_match = 0
+                        
+                    if problem.allow_ai == True:
+
+                        selected_token = None
+                        if problem.selected_token:
+                            selected_token = problem.selected_token
+                        else:
+                            print("Invalid token issolated with problem")
+                            comment += "Invalid token. Fail to AI review."
+
+                        if selected_token:
+
+                            # 1. 构建 system_content (messages)
+                            system_content = "假如你是一名经验丰富的大学计算机教授，你需要慢慢地、仔细地为一道作业给出评分。下面是这道作业，学生需要阅读以下题面严格按照其中的输入、输出格式编写结构清晰、可读性高的代码，使之在尽可能优秀的时间与空间实现下完成题面要求：" + "\n"
+                            system_content += re.search(r"<-&\^stem\s*(.*?)\s*stem\$&->", problem.content_problem, re.DOTALL).group(1) + "\n"
+
+                            if problem.sample:
+                                system_content += "下面我将给出示例代码：" + "\n"
+                                system_content += problem.sample + "\n"
+                            
+                            if problem.sample_explanation:
+                                system_content += "这是示例代码具体实现的解释：" + "\n"
+                                system_content += problem.sample_explanation + "\n"
+                            
+                            system_content += "下面我将给出很多学生的作业，请你完成以下任务：" + "\n"
+                            system_content += "1.就学生作业的代码风格进行评分，以示例代码为模板，满分为100分。" + "\n"
+
+                            if problem.style_criteria:
+                                system_content += "下面是代码风格的具体要求：" + "\n"
+                                system_content += problem.style_criteria + "\n"
+                                                        
+                            system_content += "2.就学生作业的代码实现进行评分，以示例代码的具体实现为模板，满分为100分。" + "\n"
+
+                            if problem.implement_criteria:
+                                system_content += "下面是代码实现的具体要求：" + "\n"
+                                system_content += problem.implement_criteria + "\n"
+                            
+                            if problem.additional:
+                                system_content += "下面我将给出一些可能的实现以及分值：" + "\n"
+                                system_content += problem.additional + "\n"
+                            
+                            system_content += "3. 就代码风格、代码实现两方面给出简短的评价和详细的修改意见。注意字数控制在400字以内，不需要援引原代码只需要指出哪里有问题以及修改意见，不要输出类似**或者`的markdown语法。" + "\n"
+                            system_content += "在输出时，请不要输出其他内容，仅按照我下面给出的格式输出三行内容：" + "\n"
+                            system_content += "S: 代码风格评分" + "\n"
+                            system_content += "I: 代码实现评分" + "\n"
+                            system_content += "N: 简短的评价和详细的的修改意见" + "\n"
+                            system_content += "如果收到的请求不是代码，S项为0分；如果与题目要求实现区别过大，S项正常评分，I项为0分；N项正常输出。" + "\n"
+
+                            messages = [
+                                {
+                                    "role": "system",
+                                    "content": system_content
+                                }
+                            ]
+
+                            # print("\n######### CONT ###############\n" + content_answer)
+
+                            # 2. 加入历史消息
+                            for each_history in problem.ai_histories.all():
+                                if each_history.history:
+                                    try:
+                                        history_dict = json.loads(each_history.history)
+                                        if isinstance(history_dict, dict) and "role" in history_dict and "content" in history_dict:
+                                            messages.append(history_dict)
+                                        else:
+                                            print(f"Warning: AIHistory ID {each_history.id} format incorrect.")
+                                    except json.JSONDecodeError:
+                                        print(f"Warning: AIHistory ID {each_history.id} invalid.")
+
+                            
+                            # 3. 匹配学生代码
+                            # student_code_match = re.search(r"<-&.*?&->\s*<-&.*?&->\s*<-&(.*?)&->", content_answer, re.DOTALL)
+                            # student_code = ""
+
+                            # if student_code_match:
+                            #     student_code = student_code_match.group(1)
+                            # else:
+                            #     print(f"Warning: cannot extract student code")
+                            
+                            messages.append({"role": "user", "content": content_answer})
+
+                            # 4. 构建发送的最终payload
+                            payload_for_ai = {
+                                "platform": selected_token.platform,
+                                "token": selected_token.token,
+                                "messages": messages
+                            }
+                            
+                            # 准备连接
+                            conn = http.client.HTTPConnection("localhost", 8302)
+
+                            try:
+                                conn.request("POST", "/aigrading/", json.dumps(payload_for_ai), headers)
+                                response = conn.getresponse()
+                                body = response.read()
+                                status_code = response.status
+                                json_data = json.loads(body.decode("utf-8"))
+                            except Exception as e:
+                                print("An error occurred:", e)
+                            finally:
+                                conn.close()
+
+                            # 获得AI回复
+                            assistant_reply = ""
+                            
+                            if status_code != 200:
+                                comment += json.dumps(json_data, indent=4)+"\n"
+                            elif status_code == 200 and json_data and "response" in json_data:
+                                assistant_reply = json_data.get("response")
+                            
+                            if content_answer and assistant_reply:
+                                problem.ai_histories.create(history = json.dumps({"role": "user", "content": content_answer}))
+                                problem.ai_histories.create(history = json.dumps({"role": "assistant", "content": assistant_reply}))
+                            
+                            # print("\n######### ASSI ###############\n" + json_data.get("response"))
+
+                            s_match = re.search(r"S:\s*(\d+)", assistant_reply).group(1)
+                            i_match = re.search(r"I:\s*(\d+)", assistant_reply).group(1)
+                            n_match = re.search(r"N:\s*(.*)", assistant_reply, re.DOTALL).group(1)
+
+                            # print("S"+s_match)
+                            # print("I"+i_match)
+                            
+                            result["stylescore"] = s_match
+                            result["implescore"] = i_match
+                            comment += "代码风格分: "+s_match + "\n代码实现分: " + i_match + "\n" + n_match
+
                 
-                         
                 submission = Submission()
                 submission.content_answer = content_answer
                 submission.score = score
                 submission.user = this_user
                 submission.problem = problem
                 submission.comment = comment
+                submission.stylescore = s_match
+                submission.implescore = i_match
                 submission.save()
-                return Response({
-                "id":request.data.get('id'),
-                "score":score,
-                "comment":comment
-                }, status=status.HTTP_200_OK)
+                result["score"] = score
+                result["comment"] = comment
+
+                return Response(result, status=status.HTTP_200_OK)
+            
+            
+
 ###########################################题目批改与信息获取##############################################
 class QuestionDetailView(APIView):
     permission_classes = [IsAuthenticated]

@@ -19,7 +19,7 @@ from django.urls import path, include
 from .view import rootView
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView,MessageView
-from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView, ImageView, RunCodeView
+from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView, ImageView, ProblemAISettingsView, TokenView, TokenDetailView, RunCodeView
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -35,7 +35,9 @@ urlpatterns = [
     path('home/<str:coursename>/', AssignmentView.as_view()),
     path('message/',MessageView.as_view()),
     path('message/<int:received>/',MessageView.as_view()),
-    path('home/', CourseView.as_view()), 
+    path('home/', CourseView.as_view()),
+    path('home/user/tokens/', TokenView.as_view()),
+    path('home/user/tokens/<int:id>/', TokenDetailView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/', ProblemView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/programming/<int:problem_id>/', CodeAnswerView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/submit/', SubmissionView.as_view()),
@@ -45,5 +47,6 @@ urlpatterns = [
     path('home/<str:coursename>/<str:assignmentname>/getscore/',GetAssignmentScoreView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getscore/<str:student>/',GetAssignmentScoreView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/getstuscore/<str:student>/', GetStuScoreView.as_view()),
+    path('home/<str:coursename>/<str:assignmentname>/ai/<int:problem_id>/', ProblemAISettingsView.as_view()),
     path('runcode/', RunCodeView.as_view())
 ] #+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) #静态文件路径，上线时注释

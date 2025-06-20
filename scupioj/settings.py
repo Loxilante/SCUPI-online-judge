@@ -50,9 +50,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # 放在 CommonMiddleware 之前
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # 放在 CommonMiddleware 之前
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware', # 防止session检查时csrf报错
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -179,15 +179,13 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SAMESITE = 'None'  # 允许跨站请求
 SESSION_COOKIE_SECURE = True       # 因为SameSite=None，需要Secure
 
-
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # 允许本地开发服务器
-    "http://8.137.145.192",
-    "https://8.137.145.192",
+    "http://127.0.0.1:3000",
+    "https://oj.loxilante.uno",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
