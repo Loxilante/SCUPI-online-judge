@@ -29,9 +29,7 @@ In version 2.0.0, the platform integrates a dynamic AI-assisted evaluation syste
 
 2. Initialize MySQL root password.
 
-3. 
-
-   ```
+3. ```
    git clone https://github.com/LinZiyang666/SCUPI-online-judge-system.git
    cd .\SCUPI-online-judge-system\
    pip install -r requirements.txt
