@@ -16,9 +16,9 @@ __pycache__/
 gunicorn_conf.py
 
 # 忽略 media/images/ 目录下的所有图片文件
-media/images/*.png
-media/images/*.jpeg
-media/images/*.jpg
+# media/images/*.png
+# media/images/*.jpeg
+# media/images/*.jpg
 
 uwsgi.pid
 uwsgi.ini
