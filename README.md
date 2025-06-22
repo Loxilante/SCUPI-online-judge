@@ -1,10 +1,14 @@
 # SCUPI ONLINE JUDGE SYSTEM
 
-Version: 2.0.0
+Version: 2.0.0 
+
+**[Changelog](./CHANGELOG.md)**
 
 **[Front-end repository](https://github.com/Loxilante/SCUPIOJ-Front-End)**
 
 **[中文README文档](./README.zh-CN.md)**
+
+---
 
 ## I. Project Description
 
@@ -14,7 +18,7 @@ Since the establishment of the Computer Science and Technology major at Sichuan 
 
 ### Main Features
 
-The 1.0.0-beta version implemented basic CRUD functionalities for course-based assignments, supporting question types such as multiple-choice (including multiple answers), short-answer, and programming problems. The programming problems support multi-file submissions within the same directory, currently accepting cpp and java languages. It allows setting command-line arguments, standard input, and time/memory constraints, meeting the requirements of courses like programming languages, data structures, and algorithms. Short-answer questions only support manual grading in version 1.0.0-beta.
+The 1.0.0 version implemented basic CRUD functionalities for course-based assignments, supporting question types such as multiple-choice (including multiple answers), short-answer, and programming problems. The programming problems support multi-file submissions within the same directory, currently accepting cpp and java languages. It allows setting command-line arguments, standard input, and time/memory constraints, meeting the requirements of courses like programming languages, data structures, and algorithms. Short-answer questions only support manual grading in version 1.0.0.
 
 In version 2.0.0, the platform integrates a dynamic AI-assisted evaluation system capable of intelligently grading programming problems based on code style and implementation. The platform also provides a comprehensive API Token management system and designed AI evaluation templates supporting multiple generative AI platforms, including ChatGPT, Deepseek, Gemini, etc.
 
