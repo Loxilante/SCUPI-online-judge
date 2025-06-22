@@ -78,6 +78,6 @@
 
 ### 数据库设计
 
-具体用到的数据库结构如下：![database](D:\Typora\media\images\database.png)
+具体用到的数据库结构如下：![database](./media/images/database.png)
 
 2.0.0版本新增的数据库结构如下：![database2](./media/images/database2.png)
