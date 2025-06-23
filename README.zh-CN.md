@@ -1,10 +1,8 @@
 # SCUPI-ONLINE-JUDGE-SYSTEM
 
-版本号：2.0.0
+版本号：2.1.0
 
 **[中文更新日志](./CHANGELOG.zh-CN.md)**
-
-**[前端仓库](https://github.com/Loxilante/SCUPIOJ-Front-End)**
 
 ---
 
