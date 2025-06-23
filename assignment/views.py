@@ -25,6 +25,7 @@ from django.utils import timezone
 import tempfile
 from django.http import JsonResponse
 from .utils import is_in_group, is_teacher_or_administrator
+from collections import Counter
 ###################作业操作####################################################
 """
 作业系统
@@ -752,7 +753,7 @@ class SubmissionView(APIView):
                 choice_student = [item.lower() for item in choice_student]
                 choice_answer = [item.lower() for item in choice_answer]
                 
-                if len(choice_student) == len(choice_answer) and all(elem in choice_answer for elem in choice_student):
+                if Counter(choice_student) == Counter(choice_answer):
                     score = problem.score
                 else:
                     score = 0
@@ -970,9 +971,13 @@ class SubmissionView(APIView):
                             
                             # print("\n######### ASSI ###############\n" + json_data.get("response"))
 
-                            s_match = re.search(r"S:\s*(\d+)", assistant_reply).group(1)
-                            i_match = re.search(r"I:\s*(\d+)", assistant_reply).group(1)
-                            n_match = re.search(r"N:\s*(.*)", assistant_reply, re.DOTALL).group(1)
+                            s_match_obj = re.search(r"S:\s*(\d+)", assistant_reply)
+                            i_match_obj = re.search(r"I:\s*(\d+)", assistant_reply)
+                            n_match_obj = re.search(r"N:\s*(.*)", assistant_reply, re.DOTALL)
+
+                            s_match = s_match_obj.group(1) if s_match_obj else "0"
+                            i_match = i_match_obj.group(1) if i_match_obj else "0"
+                            n_match = n_match_obj.group(1) if n_match_obj else "Error: AI comment not found"
 
                             # print("S"+s_match)
                             # print("I"+i_match)
@@ -988,13 +993,13 @@ class SubmissionView(APIView):
                 submission.user = this_user
                 submission.problem = problem
                 submission.comment = comment
-                submission.stylescore = s_match
-                submission.implescore = i_match
+                submission.stylescore = int(s_match)
+                submission.implescore = int(i_match)
                 submission.save()
                 result["score"] = score
                 result["comment"] = comment
 
-                return Response(result, status=status.HTTP_200_OK)
+            return Response(result, status=status.HTTP_200_OK)
             
             
 
