@@ -1,0 +1,17 @@
+
+.git
+.gitignore
+
+node_modules
+
+pnpm-debug.log*
+
+dist
+dist-ssr
+
+.vscode
+.idea
+.DS_Store
+
+.env.local
+.env.*.local

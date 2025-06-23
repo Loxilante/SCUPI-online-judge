@@ -1,0 +1,19 @@
+@import './reset.css';
+@import './nprogress.css';
+@import './transition.css';
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+html {
+  overflow-x: hidden;
+}
+.tab-table-pane {
+  height: calc(100% - 60px);
+}
+* {
+  word-break: break-all;
+}
