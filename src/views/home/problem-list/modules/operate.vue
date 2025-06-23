@@ -310,7 +310,7 @@ watch(visible, () => {
         <NFormItem label="Response Limit" path="response_limit">
           <NInput v-model:value="model.response_limit" placeholder="Please Enter Response Limit" />
         </NFormItem>
-        <NFormItem label="Allow AI" path="allow_ai">
+        <NFormItem v-if="model.type !== 'choice'" label="Allow AI" path="allow_ai">
           <NCheckbox v-model:checked="model.allow_ai" placeholder="Please Enter allow_ai" />
         </NFormItem>
         <NFormItem v-if="model.allow_ai" label="Select AI Token" path="selected_token">
