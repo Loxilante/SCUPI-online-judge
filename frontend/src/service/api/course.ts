@@ -174,7 +174,7 @@ export function updateProblemByHomework(data: { course_name: any; home_work: any
 
 export function removeQuestion(course_name: any, home_work: any, id: any) {
   return request<any>({
-    url: `/home/${course_name}/${home_work}`,
+    url: `/home/${course_name}/${home_work}/`,
     method: 'delete',
     data: {
       delete_id: [id]

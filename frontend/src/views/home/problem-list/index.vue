@@ -113,7 +113,7 @@ const { columns, filteredColumns, data, loading, getData } = useTable<
                 {'Course Records'}
               </NButton>
           </RouterLink>
-          <NButton v-p="level2" type="primary" ghost size="small" onClick={() => handleEdit(row.title)}>
+          <NButton v-p="level2" type="primary" ghost size="small" onClick={() => handleEdit(row.id)}>
             {$t('common.edit')}
           </NButton>
           <RouterLink to={`/home/submission-detail?course_name=${route.query.course_name}&homework_name=${route.query.homework_name}&problemId=${row.id}`}>
@@ -164,9 +164,9 @@ const checkedRowKeys = ref<string[]>([]);
 /** the editing row data */
 const editingData = ref<any>(null);
 
-function handleEdit(title: string) {
+function handleEdit(id: string) {
   operateType.value = 'edit';
-  editingData.value = data.value.find((item: any) => item.title === title) || null;
+  editingData.value = data.value.find((item: any) => item.id === id) || null;
   openDrawer();
 }
 onMounted(() => {

@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.1.1] - 2025-06-25
+
+### Fixed
+- Fixed a bug that prevented problems from being deleted.
+- Resolved an issue where API requests for problems with identical names could return one same data.
+
+---
+
 ## [2.1.0] - 2025-06-24
 
 ### Changed
