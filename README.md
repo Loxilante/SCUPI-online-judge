@@ -20,20 +20,26 @@ The 1.0.0 version implemented basic CRUD functionalities for course-based assign
 
 In version 2.0.0, the platform integrates a dynamic AI-assisted evaluation system capable of intelligently grading programming problems based on code style and implementation. The platform also provides a comprehensive API Token management system and designed AI evaluation templates supporting multiple generative AI platforms, including ChatGPT, Deepseek, Gemini, etc.
 
-### Backend Technology Stack
+## II. Technology Stack
+
+### Frontend Technology Stack
+
+- **Development:** Vue3, TypeScript, Naive UI, Vue Router, Pinia, Axios, Vite, pnpm
+
+### Backend  Technology Stack
 
 - **Development:** Django, Django REST framework, JWT, Docker, basic multi-threading in C++, Shell scripting, Celery (for scheduled/asynchronous tasks and daemon processes).
 - **Deployment and Maintenance:** Apache/Nginx, uWSGI, MySQL (basic database knowledge required, no detailed SQL needed; familiarity with phpMyAdmin usage).
 
-## II. Development Environment Setup (Windows Local Environment)
+## III. Development Environment Setup (Windows Local Environment)
 
 1. [Download and install WampServer](https://www.wampserver.com/en/).
 
 2. Initialize MySQL root password.
 
 3. ```
-   git clone https://github.com/LinZiyang666/SCUPI-online-judge-system.git
-   cd .\SCUPI-online-judge-system\
+   git clone https://github.com/Loxilante/SCUPI-online-judge.git
+   cd .\SCUPI-online-judge\
    pip install -r requirements.txt
    ```
 
@@ -67,12 +73,20 @@ In version 2.0.0, the platform integrates a dynamic AI-assisted evaluation syste
    - ```
      cd java_sandbox && bash ./initialize.sh
      ```
+     
+   - ```
+     cd ai_sandbox && bash ./initialize.sh
+     ```
 
    Retry with `bash ./initialize.sh` if installation fails due to network issues.
 
-## Architecture Description
+## IV. Architecture Description
 
 This project adopts a frontend-backend separated architecture, with communication via APIs.
+
+### Frontend Architecture
+
+#### Soybean Admin
 
 ### Backend Architecture
 

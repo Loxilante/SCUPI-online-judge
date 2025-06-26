@@ -18,24 +18,36 @@
 
 2.0.0版本后，平台接入了动态化AI辅助评测系统，可以对编程题的代码风格、代码实现进行智能化打分。平台完善了一套完整的API Token管理系统，并设计了AI评测模板，支持多平台AI（如ChatGPT、Deepseek、Gemini等主流生成式AI）
 
+## 二. 技术栈
+
+### 前端技术栈
+
+项目开发：Vue3，TypeScript，Naive UI，Vue Router，Pinia，Axios，Vite，pnpm
+
 ### 后端技术栈
 
 项目开发：Django，Django-rest-framework，JWT，Docker，简单的Cpp多线程，shell，Celery（用于定时/异步脚本，守护进程）
 
 部署与维护：Apache/Nginx，uwsgi，Mysql（不用学习详细的SQL，懂得基础的数据库知识，会使用phpmyadmin）
 
-## 二. 开发环境搭建（基于Windows本机环境）
+## 三. 开发环境搭建（基于Windows本机环境）
 
 1. [官网下载并安装WampServer](https://www.wampserver.com/en/)可参考[bilibili视频](https://www.bilibili.com/video/BV1gJ411x7WT/?spm_id_from=333.337.search-card.all.click&vd_source=3ea11c6471f4ecd3b36df28586aea0fa)
 
-2. 初始化Mysql root密码，可参考以上bilibili视频
+2. 初始化 Mysql root 密码，可参考以上视频。
 
 3. ```shell
-   git clone https://github.com/LinZiyang666/SCUPI-online-judge-system.git ;  cd .\SCUPI-online-judge-system\ ;  pip install -r requirements.txt
+   git clone https://github.com/Loxilante/SCUPI-online-judge.git
+   cd .\SCUPI-online-judge\
+   pip install -r requirements.txt
    ```
 
-   若mysqlclient安装失败请手动```pip install mysqlclient```
-
+   如果`mysqlclient`安装失败，请手动安装：
+   
+   ```
+   pip install mysqlclient
+   ```
+   
 4. (由实际情况决定)
 
    * 请设置scupioj/setting.py 中数据库用户名称，密码与使用的数据库
@@ -54,19 +66,27 @@
 
    分别运行：
 
-   * ```shell
+   - ```shell
      cd cpp_sandbox && bash ./initialize.sh 
      ```
 
-   * ```shell 
+   - ```shell 
      cd java_sandbox && bash ./initialize.sh
+     ```
+     
+   - ```shell
+     cd ai_sandbox && bash ./initialize.sh
      ```
 
    若因网络原因安装失败请重试```bash ./initialize.sh```
 
-## 架构描述
+## 四. 架构描述
 
 本项目采取前后端分离式架构，前后端通过api交流。
+
+### 前端架构
+
+#### Soybean Admin
 
 ### 后端架构
 
