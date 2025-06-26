@@ -27,11 +27,17 @@ const handleSubmit = () => {
     id: props.id,
     course_name: props.course_name,
     homework_name: props.homework_name
-  }).then(({ data }) => {
-    message.success("submit success!")
-    emit("getData")
   })
-}
+  .then(({ data }) => {
+    if (data.error) {
+
+    }
+    else {
+      message.success("submit success!")
+      emit("getData")
+    }
+  });
+};
 </script>
 <template>
   <div style="height:100%;">

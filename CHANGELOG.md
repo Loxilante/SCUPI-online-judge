@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.1.2] - 2025-06-26
+
+### Fixed
+- Fixed the display of error messages.
+- Fixed the back-end judging logic for text problems.
+
+---
+
 ## [2.1.1] - 2025-06-25
 
 ### Fixed

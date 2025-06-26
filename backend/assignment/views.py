@@ -231,6 +231,7 @@ class ProblemView(APIView):
             
             counter = 0    
             for problem_info in serializer.data:
+                score_get = 0
                 this_problem = Problem.objects.get(id=problem_info["id"])
                 if not this_problem.submission_set.filter(user=User.objects.get(username=request.session.get("username"))).exists():
                         score_get =0

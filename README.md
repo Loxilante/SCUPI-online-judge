@@ -1,6 +1,6 @@
 # SCUPI ONLINE JUDGE SYSTEM
 
-Version: 2.1.0
+Version: 2.1.2
 
 **[Changelog](./CHANGELOG.md)**
 
@@ -84,6 +84,6 @@ This project adopts a frontend-backend separated architecture, with communicatio
 
 ### Database Design
 
-The database structure used: ![database](./media/images/database.png)
+The database structure used: ![database](./backend/media/images/database.png)
 
-New database structure in version 2.0.0: ![database2](./media/images/database2.png)
+New database structure in version 2.0.0: ![database2](./backend/media/images/database2.png)
