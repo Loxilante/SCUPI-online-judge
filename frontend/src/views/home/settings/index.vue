@@ -212,7 +212,7 @@ onMounted(() => {
           <NForm 
             :model="passwordForm"
             label-placement="left" 
-            label-width="140" 
+            label-width="180" 
             class="w-full md:w-1/2 mt-4"
           >
             <NFormItem label="Current Password">
