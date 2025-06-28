@@ -49,6 +49,7 @@ interface Emits {
   (e: 'submitted'): void;
 }
 
+const isLoading = ref(false);
 const emit = defineEmits<Emits>();
 const imageList: any = ref([]);
 
@@ -91,20 +92,27 @@ const rules: Record<RuleKey, App.Global.FormRule> = {
 };
 
 function handleUpdateModelWhenEdit() {
-  operateType.value = 'add'
-  queryCodeCase({ course_name: props.course_name, homework_name: props.homework_name, id: props.rowData.id }).then(({data}) => {
-    let panels:any[] = [];
-    if(data && data.length > 0){
-      operateType.value = 'edit'
-      data.forEach((item:any,index:number)=>{
-      panels.push({
-        label:index+1,
-        model:item
+  isLoading.value = true;
+  operateType.value = 'add';
+  panelsRef.value = [];
+
+  queryCodeCase({ course_name: props.course_name, homework_name: props.homework_name, id: props.rowData.id })
+    .then(({data}) => {
+      let panels:any[] = [];
+      if(data && data.length > 0){
+        operateType.value = 'edit'
+        data.forEach((item:any,index:number)=>{
+        panels.push({
+          label:index+1,
+          model:item
+        })
       })
+      panelsRef.value = panels;
+      }
     })
-    panelsRef.value = panels;
-    }
-  })
+    .finally(() => {
+      isLoading.value = false;
+    })
 }
 
 function closeDrawer() {
@@ -179,32 +187,39 @@ watch(visible, () => {
 
 <template>
   <NDrawer v-model:show="visible" title="Add .in and .out for coding problem" display-directive="show" :width="840">
-    <NDrawerContent title="Add .in and .out for coding problem" :native-scrollbar="false" closable>
-      <NForm ref="formRef" :model="model" :rules="rules" label-placement="left" :label-width="210">
-        <n-tabs style="height:100%" v-model:value="valueRef" type="card" :addable="addableRef" :closable="closableRef"
-          tab-style="min-width: 80px;" @close="handleClose" @add="handleAdd">
-          <n-tab-pane style="height:100%" v-for="panel in panelsRef" :key="panel.label" :name="panel.label">
-            <NFormItem label="Space Limit" path="space_limit">
-              <NInput v-model:value="panel.model.space_limit" placeholder="Please Enter Space Limit" />
-            </NFormItem>
-            <NFormItem label="Time Limit" path="time_limit">
-              <NInput v-model:value="panel.model.time_limit" placeholder="Please Enter Time Limit" />
-            </NFormItem>
-            <NFormItem label="Command Line Arguments" path="time_limit">
-              <NInput v-model:value="panel.model.command_line_arguments" placeholder="Please Enter Command Line Arguments" />
-            </NFormItem>
-            <NFormItem label="Add .in" path="standard_input">
-              <NInput type="textarea" v-model:value="panel.model.standard_input" placeholder="Please Enter Add .in" />
-            </NFormItem>
-            <NFormItem label="Add .out" path="standard_output">
-              <NInput type="textarea" v-model:value="panel.model.standard_output" placeholder="Please Enter Add .out" />
-            </NFormItem>
-            <NFormItem label="score" path="stem">
-              <NInput v-model:value="panel.model.score" placeholder="Please score" />
-            </NFormItem>
-          </n-tab-pane>
-        </n-tabs>
-      </NForm>
+    <NDrawerContent title="Add .in and .out for coding problem" :native-scrollbar="false" closable :content-style="{ position: 'relative' }">
+      <template v-if="!isLoading">
+        <NForm ref="formRef" :model="model" :rules="rules" label-placement="left" :label-width="210">
+          <n-tabs style="height:100%" v-model:value="valueRef" type="card" :addable="addableRef" :closable="closableRef"
+            tab-style="min-width: 80px;" @close="handleClose" @add="handleAdd">
+            <n-tab-pane style="height:100%" v-for="panel in panelsRef" :key="panel.label" :name="panel.label">
+              <NFormItem label="Space Limit" path="space_limit">
+                <NInput v-model:value="panel.model.space_limit" placeholder="Please Enter Space Limit" />
+              </NFormItem>
+              <NFormItem label="Time Limit" path="time_limit">
+                <NInput v-model:value="panel.model.time_limit" placeholder="Please Enter Time Limit" />
+              </NFormItem>
+              <NFormItem label="Command Line Arguments" path="time_limit">
+                <NInput v-model:value="panel.model.command_line_arguments" placeholder="Please Enter Command Line Arguments" />
+              </NFormItem>
+              <NFormItem label="Add .in" path="standard_input">
+                <NInput type="textarea" v-model:value="panel.model.standard_input" placeholder="Please Enter Add .in" />
+              </NFormItem>
+              <NFormItem label="Add .out" path="standard_output">
+                <NInput type="textarea" v-model:value="panel.model.standard_output" placeholder="Please Enter Add .out" />
+              </NFormItem>
+              <NFormItem label="score" path="stem">
+                <NInput v-model:value="panel.model.score" placeholder="Please score" />
+              </NFormItem>
+            </n-tab-pane>
+          </n-tabs>
+        </NForm>
+      </template>
+      <template v-else>
+        <div class="loading-container">
+          <n-spin size="large" />
+        </div>
+      </template>
       <template #footer>
         <NSpace :size="16">
           <NButton @click="closeDrawer">Cancel</NButton>
@@ -217,4 +232,19 @@ watch(visible, () => {
   </NDrawer>
 </template>
 
-<style scoped></style>
+<style scoped>
+.loading-container, .empty-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.loading-container p {
+  margin-top: 20px;
+  color: #999;
+}
+</style>

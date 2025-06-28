@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.1.3] - 2025-06-29
+
+### Added
+- Added loading spinner for drawers and problem detail page to improve user experience during data fetching.
+
+### Improved
+- Adjusted the component layout on the settings page.
+
+---
+
 ## [2.1.2] - 2025-06-26
 
 ### Fixed

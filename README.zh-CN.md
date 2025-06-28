@@ -1,6 +1,6 @@
 # SCUPI-ONLINE-JUDGE-SYSTEM
 
-版本号：2.1.2
+版本号：2.1.3
 
 **[中文更新日志](./CHANGELOG.zh-CN.md)**
 

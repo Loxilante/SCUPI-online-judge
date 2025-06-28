@@ -1,6 +1,6 @@
 # SCUPI ONLINE JUDGE SYSTEM
 
-Version: 2.1.2
+Version: 2.1.3
 
 **[Changelog](./CHANGELOG.md)**
 
