@@ -11,8 +11,9 @@ import { getProblemDetail } from '@/service/api/course'
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
+const isLoading = ref(true);
 const imageList: any = ref([]);
-const model: any = ref({});
+const model: any = ref(null);
 const { handleProblemDetail, getImageList } = useResolve();
 const handleAgain = (tmp: any) => {
   if (tmp.type == 'text') {
@@ -33,12 +34,18 @@ const handleAgain = (tmp: any) => {
   }
   return tmp
 }
-const getData = ()=>{
-  getProblemDetail({ course_name: route.query.course_name, home_work: route.query.homework_name, id: route.query.problemId }).then((res) => {
-    if (res.data && res.data.length) {
-      model.value = {...handleAgain(handleProblemDetail(res.data[0])),score_get:res.data[0].score_get}
-    }
-  })
+const getData = () => {
+  isLoading.value = true;
+  console.log(isLoading.value);
+  getProblemDetail({ course_name: route.query.course_name, home_work: route.query.homework_name, id: route.query.problemId })
+    .then((res) => {
+      if (res.data && res.data.length) {
+        model.value = {...handleAgain(handleProblemDetail(res.data[0])),score_get:res.data[0].score_get}
+      }
+    })
+    .finally(() => {
+      isLoading.value = false;
+    });
 }
 onMounted(() => {
   getData()
@@ -50,13 +57,19 @@ getImageList({ course_name: route.query.course_name, homework_name: route.query.
 
 <template>
   <div class="flex-vertical-stretch gap-16px overflow-hidden <sm:overflow-auto">
-    <NCard :title="`${model.title} Score:${model.score_get}/${model.score}`" :bordered="false" size="small" class="card-wrapper sm:flex-1-hidden">
+    <div v-if="isLoading" class="loading-container">
+      <n-spin size="large" />
+    </div>
+    <NCard v-else-if="model" :title="`${model.title} Score:${model.score_get}/${model.score}`" :bordered="false" size="small" class="card-wrapper sm:flex-1-hidden">
       <Code @getData="getData" :course_name="route.query.course_name" :id="route.query.problemId" :homework_name="route.query.homework_name" v-if="model.type == 'programming'" :item="model" :imageList="imageList"></Code>
       <Description @getData="getData" :course_name="route.query.course_name" :id="route.query.problemId" :homework_name="route.query.homework_name" v-else :imageList="imageList" :item="model"></Description>
       <!-- <div class="submit">
         <NButton type="primary">submit</NButton>
       </div> -->
     </NCard>
+    <div v-else class="empty-container">
+      <n-empty description="Unable to load the problem, please refresh the webpage."></n-empty>
+    </div>
   </div>
 </template>
 
@@ -112,6 +125,20 @@ getImageList({ course_name: route.query.course_name, homework_name: route.query.
 .flex-vertical-stretch :deep(.n-card__content){
   flex:auto;
   height: calc(100% - 50px);
+}
+.loading-container, .empty-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 8px;
+}
+.loading-container p {
+  margin-top: 20px;
+  color: #999;
 }
 .submit {
   display: flex;
