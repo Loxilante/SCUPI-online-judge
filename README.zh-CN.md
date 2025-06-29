@@ -24,9 +24,9 @@
 
 在此，向以下主要贡献者表示最诚挚的感谢 (排名不分先后):
 
-- **[@Linziyang666](https://www.google.com/search?q=https://github.com/Linziyang666)**
-- **[@cysgynn](https://www.google.com/search?q=https://github.com/cysgynn)**
-- **[@s1050775697](https://www.google.com/search?q=https://github.com/s1050775697)**
+- [@LinZiyang666](https://github.com/LinZiyang666)
+- [@cysgynn](https://github.com/cysgynn)
+- [@s1050775697](https://github.com/s1050775697)
 
 他们的努力为项目的成功奠定了坚实的基础。
 

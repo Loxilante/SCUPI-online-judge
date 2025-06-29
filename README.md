@@ -26,9 +26,9 @@ The successful development and implementation of this project would not have bee
 
 I would like to extend our sincerest gratitude to the following key contributors (in no particular order):
 
-- @Linziyang666
-- @cysgynn
-- @s1050775697
+- [@LinZiyang666](https://github.com/LinZiyang666)
+- [@cysgynn](https://github.com/cysgynn)
+- [@s1050775697](https://github.com/s1050775697)
 
 Their hard work laid a solid foundation for the success of this project.
 
