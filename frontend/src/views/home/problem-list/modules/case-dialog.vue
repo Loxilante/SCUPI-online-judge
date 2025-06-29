@@ -94,7 +94,6 @@ const rules: Record<RuleKey, App.Global.FormRule> = {
 function handleUpdateModelWhenEdit() {
   isLoading.value = true;
   operateType.value = 'add';
-  panelsRef.value = [];
 
   queryCodeCase({ course_name: props.course_name, homework_name: props.homework_name, id: props.rowData.id })
     .then(({data}) => {
