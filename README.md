@@ -20,6 +20,23 @@ The 1.0.0 version implemented basic CRUD functionalities for course-based assign
 
 In version 2.0.0, the platform integrates a dynamic AI-assisted evaluation system capable of intelligently grading programming problems based on code style and implementation. The platform also provides a comprehensive API Token management system and designed AI evaluation templates supporting multiple generative AI platforms, including ChatGPT, Deepseek, Gemini, etc.
 
+### Special  Thanks
+
+The successful development and implementation of this project would not have been possible without the invaluable contributions and diligent efforts of several senior SCUPI students. They dedicated a great deal of effort to crucial aspects of the project, including key module design, code architecture, and technical documentation.
+
+I would like to extend our sincerest gratitude to the following key contributors (in no particular order):
+
+- @Linziyang666
+- @cysgynn
+- @s1050775697
+
+Their hard work laid a solid foundation for the success of this project.
+
+Additionally, the following are the legacy repositories of SCUPI-online-judge:
+
+- **Original Frontend Repository:** [LinZiyang666/SCUPIOJ-Front-End](https://github.com/LinZiyang666/SCUPIOJ-Front-End)
+- **Original Backend Repository:** [LinZiyang666/SCUPI-online-judge-system](https://github.com/LinZiyang666/SCUPI-online-judge-system)
+
 ## II. Technology Stack
 
 ### Frontend Technology Stack

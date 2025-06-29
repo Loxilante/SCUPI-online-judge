@@ -18,6 +18,23 @@
 
 2.0.0版本后，平台接入了动态化AI辅助评测系统，可以对编程题的代码风格、代码实现进行智能化打分。平台完善了一套完整的API Token管理系统，并设计了AI评测模板，支持多平台AI（如ChatGPT、Deepseek、Gemini等主流生成式AI）
 
+### 特别致谢
+
+本项目的推进与实现，离不开多位 SCUPI 学长的宝贵贡献和辛勤付出。他们在项目的关键模块设计、代码架构搭建及技术文档编写等核心环节中倾注了大量心血。
+
+在此，向以下主要贡献者表示最诚挚的感谢 (排名不分先后):
+
+- **[@Linziyang666](https://www.google.com/search?q=https://github.com/Linziyang666)**
+- **[@cysgynn](https://www.google.com/search?q=https://github.com/cysgynn)**
+- **[@s1050775697](https://www.google.com/search?q=https://github.com/s1050775697)**
+
+他们的努力为项目的成功奠定了坚实的基础。
+
+以下是 SCUPI-online-judge 的旧版本仓库：
+
+- **前端原仓库:** [LinZiyang666/SCUPIOJ-Front-End](https://github.com/LinZiyang666/SCUPIOJ-Front-End)
+- **后端原仓库:** [LinZiyang666/SCUPI-online-judge-system](https://github.com/LinZiyang666/SCUPI-online-judge-system)
+
 ## 二. 技术栈
 
 ### 前端技术栈
