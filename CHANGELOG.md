@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.2.0] - 2025-07-01
+
+### Added
+- Extended the AI proxy service to support several new platforms: Anthropic Claude, Doubao, Alibaba Qwen, and Tencent Hunyuan.
+
+---
+
 ## [2.1.3] - 2025-06-29
 
 ### Added
@@ -54,8 +61,8 @@ All notable changes to this project will be documented in this file.
 ## [2.0.0] - 2025-06-20
 
 ### Added
-- **Complete API Token Management System**: Integrated into a new "System Settings" page, this feature allows users (teachers and above) to perform CRUD operations on their AI platform tokens. Critical actions are secured with password verification, and tokens are desensitized on the frontend for security.
-- **On-Demand AI Evaluation**: Teachers can now enable or disable AI-assisted grading on a per-question basis. This includes assigning a specific token to each question, enabling the flexibility to use different AI models for different problems.
+- **Complete API Key Management System**: Integrated into a new "System Settings" page, this feature allows users (teachers and above) to perform CRUD operations on their AI platform keys. Critical actions are secured with password verification, and keys are desensitized on the frontend for security.
+- **On-Demand AI Evaluation**: Teachers can now enable or disable AI-assisted grading on a per-question basis. This includes assigning a specific api key to each question, enabling the flexibility to use different AI models for different problems.
 - **Smart & Flexible Prompt Generation**: A new system allows teachers to set configurable scoring parameters and guidelines for each question. The system then automatically combines these settings with pre-built templates and question content to generate tailored prompts for the AI.
 - **Context-Aware AI Interaction**: Implemented an `AI-History` model to persist the interaction history for each question separately. This context is automatically loaded in subsequent requests to ensure grading consistency and stability over multiple turns.
 - **Multi-Platform AI Proxy Service**: A new `ai_sandbox` Docker container acts as a universal proxy. It can dynamically select the appropriate platform SDK based on request parameters, making the system highly extensible for integrating new AI services in the future.
