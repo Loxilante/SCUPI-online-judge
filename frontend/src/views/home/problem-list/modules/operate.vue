@@ -15,7 +15,7 @@ import {
   updateProblemByHomework,
   uploadImage
 } from '@/service/api/course';
-import { getTokens } from '@/service/api/ai';
+import { getAPIKeys } from '@/service/api/ai';
 // @ts-ignore
 import List from './List.vue';
 // @ts-ignore
@@ -74,7 +74,7 @@ const options = ref([
   }
 ]);
 
-const userTokenOptions = ref([]);
+const userAPIKeyOptions = ref([]);
 
 const visible = defineModel<boolean>('visible', {
   default: false
@@ -100,7 +100,7 @@ type Model = {
   response_limit: any;
   non_programming_answer: string;
   allow_ai: boolean;
-  selected_token: number | null;
+  selected_key: number | null;
   stylescore: number | null;
   implescore: number | null;
   sample: string;
@@ -124,7 +124,7 @@ function createDefaultModel(): Model {
     response_limit: '',
     non_programming_answer: '',
     allow_ai: false,
-    selected_token: null,
+    selected_key: null,
     implescore: null,
     stylescore: null,
     sample: '',
@@ -243,17 +243,17 @@ watch(visible, () => {
     handleUpdateModelWhenEdit();
     restoreValidation();
 
-    getTokens().then(({ data, error }) => {
+    getAPIKeys().then(({ data, error }) => {
       if (!error && data) {
         // 将从API返回的数据格式化为 NSelect 需要的 { label, value } 格式
-        userTokenOptions.value = data.map(token => ({
-          label: `${token.platform} - ${token.name || 'Default'}`, // 例如 "DeepSeek - 我的备用Key"
-          value: token.id // value 应该是 token 的唯一ID
+        userAPIKeyOptions.value = data.map(apikey => ({
+          label: `${apikey.platform} - ${apikey.name || 'Default'}`, // 例如 "DeepSeek - 我的备用Key"
+          value: apikey.id // value 应该是 apikey 的唯一ID
         }));
       }
     });
   } else {
-    userTokenOptions.value = [];
+    userAPIKeyOptions.value = [];
   }
 });
 </script>
@@ -313,8 +313,8 @@ watch(visible, () => {
         <NFormItem v-if="model.type !== 'choice'" label="Allow AI" path="allow_ai">
           <NCheckbox v-model:checked="model.allow_ai" placeholder="Please Enter allow_ai" />
         </NFormItem>
-        <NFormItem v-if="model.allow_ai" label="Select AI Token" path="selected_token">
-          <NSelect v-model:value="model.selected_token" :options="userTokenOptions" placeholder="Please select a token" clearable/>
+        <NFormItem v-if="model.allow_ai" label="Select AI Key" path="selected_key">
+          <NSelect v-model:value="model.selected_key" :options="userAPIKeyOptions" placeholder="Please select an API key" clearable/>
         </NFormItem>
       </NForm>
       <template #footer>

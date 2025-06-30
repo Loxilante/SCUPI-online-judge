@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 
-class Token(models.Model):
+class APIKey(models.Model):
     PLATFORM_CHOICES = [
         ('ChatGPT', 'ChatGPT'),
         ('DeepSeek', 'DeepSeek'),
@@ -19,7 +19,7 @@ class Token(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_tokens')
     name = models.CharField(max_length=255)
-    token = models.TextField()
+    api_key = models.TextField()
     platform = models.CharField(max_length=100, choices=PLATFORM_CHOICES)
     created_time = models.DateTimeField(auto_now_add=True) 
 
@@ -53,7 +53,7 @@ class Problem(models.Model):
     non_programming_answer = models.TextField(null=True, blank=True)
     
     allow_ai = models.BooleanField(default=False)
-    selected_token = models.ForeignKey(Token, on_delete=models.SET_NULL, null=True, blank=True)
+    selected_key = models.ForeignKey(APIKey, on_delete=models.SET_NULL, null=True, blank=True)
     # prompt相关
     sample = models.TextField(null=True, blank=True)
     sample_explanation = models.TextField(null=True, blank=True)

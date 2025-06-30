@@ -19,7 +19,7 @@ from django.urls import path, include
 from .view import rootView
 from user.views import LoginView, logoutView, TokenRefreshView, UserView
 from course.views import CourseView,MessageView
-from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView, ImageView, ProblemAISettingsView, TokenView, TokenDetailView, RunCodeView
+from assignment.views import AssignmentView, ProblemView, SubmissionView, CodeAnswerView, QuestionDetailView, GetAssignmentScoreView, GetStuScoreView, ImageView, ProblemAISettingsView, APIKeyView, APIKeyDetailView, RunCodeView
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -36,8 +36,8 @@ urlpatterns = [
     path('message/',MessageView.as_view()),
     path('message/<int:received>/',MessageView.as_view()),
     path('home/', CourseView.as_view()),
-    path('home/user/tokens/', TokenView.as_view()),
-    path('home/user/tokens/<int:id>/', TokenDetailView.as_view()),
+    path('home/user/apikeys/', APIKeyView.as_view()),
+    path('home/user/apikeys/<int:id>/', APIKeyDetailView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/', ProblemView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/programming/<int:problem_id>/', CodeAnswerView.as_view()),
     path('home/<str:coursename>/<str:assignmentname>/submit/', SubmissionView.as_view()),

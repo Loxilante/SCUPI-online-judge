@@ -1,50 +1,50 @@
 import { request } from '../request';
 
 /**
- * 获取当前登录用户的所有Token
- * @returns Token列表
+ * 获取当前登录用户的所有APIKey
+ * @returns APIKey列表
  */
-export function getTokens() {
+export function getAPIKeys() {
   return request<any>({
-    url: `/home/user/tokens/`,
+    url: `/home/user/apikeys/`,
     method: 'get'
   });
 }
 
 /**
- * 为当前登录用户添加一个新的Token
- * @param data 包含 platform, name, 和 token 的对象
- * @returns 新创建的Token对象
+ * 为当前登录用户添加一个新的APIKey
+ * @param data 包含 platform, name, 和 api_key 的对象
+ * @returns 新创建的APIKey对象
  */
-export function addToken(data: any) {
+export function addAPIKey(data: any) {
   return request<any>({
-    url: `/home/user/tokens/`,
+    url: `/home/user/apikeys/`,
     method: 'post',
     data: data
   });
 }
 
 /**
- * 更新一个指定的Token
- * @param data 包含要修改的Token的id，以及 password 和 new token
- * @returns 更新后的Token对象
+ * 更新一个指定的APIKey
+ * @param data 包含要修改的APIKey的id，以及 password 和 new api_key
+ * @returns 更新后的APIKey对象
  */
-export function updateToken(data: any) {
+export function updateAPIKey(data: any) {
   return request<any>({
-    url: `/home/user/tokens/${data.id}/`,
+    url: `/home/user/apikeys/${data.id}/`,
     method: 'put',
     data: data
   });
 }
-
+ 
 /**
- * 删除一个指定的Token (建议补充的功能)
- * @param data 包含要删除的Token的id
+ * 删除一个指定的APIKey (建议补充的功能)
+ * @param data 包含要删除的APIKey的id
  * @returns
  */
-export function deleteToken(data: any) {
+export function deleteAPIKey(data: any) {
   return request<any>({
-    url: `/home/user/tokens/${data.id}/`,
+    url: `/home/user/apikeys/${data.id}/`,
     method: 'delete',
     data: {
       password: data.password

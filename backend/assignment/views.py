@@ -19,7 +19,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.viewsets import GenericViewSet,ViewSet,ModelViewSet
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
-from .models import Assignment, Problem, Submission, CodeAnswer, Image, Token
+from .models import Assignment, Problem, Submission, CodeAnswer, Image, APIKey
 import re
 from django.utils import timezone
 import tempfile
@@ -157,7 +157,7 @@ class ProblemSerializer(serializers.ModelSerializer):
         class Meta:
             model = Problem
             fields = ['id', 'title', 'content_problem', 'score', 'type', 'response_limit', 'non_programming_answer', 
-                      'allow_ai', 'selected_token', 'sample', 'sample_explanation', 'style_criteria', 'implement_criteria', 'additional']
+                      'allow_ai', 'selected_key', 'sample', 'sample_explanation', 'style_criteria', 'implement_criteria', 'additional']
             extra_kwargs= {
             'id':{'read_only':True},
         }
@@ -190,13 +190,13 @@ class ProblemView(APIView):
             except:
                 return Response(status=status.HTTP_404_NOT_FOUND) #检查班级与作业是否存在
             
-            #检查token属于当前登录用户
+            #检查APIKey属于当前登录用户
             for problem in request.data:
-                token_id = problem.get('selected_token')
-                if token_id:
+                key_id = problem.get('selected_key')
+                if key_id:
                     try:
-                        Token.objects.get(id=token_id, user=request.user)
-                    except Token.DoesNotExist:
+                        APIKey.objects.get(id=key_id, user=request.user)
+                    except APIKey.DoesNotExist:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             
             serializer = ProblemSerializer(data=request.data, many=True)
@@ -273,12 +273,12 @@ class ProblemView(APIView):
 
                 this_problem = assignment.problems.get(id=problem_id)
                 serializer = ProblemSerializer(this_problem, data=problem, partial=True)
-                token_id = problem.get('selected_token')
+                key_id = problem.get('selected_key')
 
-                if (token_id):
+                if (key_id):
                     try:
-                        Token.objects.get(id=token_id, user=request.user)
-                    except Token.DoesNotExist:
+                        APIKey.objects.get(id=key_id, user=request.user)
+                    except APIKey.DoesNotExist:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
                 if serializer.is_valid():
@@ -519,83 +519,81 @@ class CodeAnswerView(APIView):
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
             
-################### TOKEN相关 #####################################
+################### APIKey相关 #####################################
 
-class TokenSerializer(serializers.ModelSerializer):
+class APIKeySerializer(serializers.ModelSerializer):
 
-    token_display = serializers.SerializerMethodField()
+    key_display = serializers.SerializerMethodField()
     created_time = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
 
-    def get_token_display(self, obj):
+    def get_key_display(self, obj):
         """
-        token只显示开头5个字符结尾4个字符
+        api_key只显示开头5个字符结尾4个字符
         """
-        if obj.token and len(obj.token) > 8:
-            return f"{obj.token[:5]}...{obj.token[-4:]}"
-        return "Invalid Token"
+        if obj.api_key and len(obj.api_key) > 8:
+            return f"{obj.api_key[:5]}...{obj.api_key[-4:]}"
+        return "..."
     
     class Meta:
-        model = Token
-        fields = ['id', 'name', 'token', 'platform', 'token_display', 'created_time']
+        model = APIKey
+        fields = ['id', 'name', 'api_key', 'platform', 'key_display', 'created_time']
         extra_kwargs = {
-            'token': {'write_only': True}
+            'api_key': {'write_only': True}
         }
 
-        
-
-class TokenView(APIView):
+class APIKeyView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     @is_teacher_or_administrator
     def get(self, request, *args, **kwargs):
         """
-        获取当前登录用户的所有Token
+        获取当前登录用户的所有APIKey
         """
-        tokens = Token.objects.filter(user=request.user)
-        serializer = TokenSerializer(tokens, many=True)
+        keys = APIKey.objects.filter(user=request.user)
+        serializer = APIKeySerializer(keys, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @is_teacher_or_administrator
     def post(self, request, *args, **kwargs):
         """
-        为当前登录用户添加一个新Token
+        为当前登录用户添加一个新APIKey
         """
-        serializer = TokenSerializer(data=request.data)
+        serializer = APIKeySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-class TokenDetailView(APIView):
+class APIKeyDetailView(APIView):
     """
-    处理单个Token的更新和删除
+    处理单个APIKey的更新和删除
     """
     permission_classes = [IsAuthenticated]
 
     def get_object(self, id, user):
         try:
-            return Token.objects.get(id=id, user=user)
-        except Token.DoesNotExist:
+            return APIKey.objects.get(id=id, user=user)
+        except APIKey.DoesNotExist:
             return None
 
     @is_teacher_or_administrator
     def get(self, request, id, *args, **kwargs):
         """
-        获取单个Token信息
+        获取单个APIKey信息
         """
-        token = self.get_object(id, request.user)
-        if token is None:
+        apikey = self.get_object(id, request.user)
+        if apikey is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
-        serializer = TokenSerializer(token)
+        serializer = APIKeySerializer(apikey)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     @is_teacher_or_administrator
     def put(self, request, id, *args, **kwargs):
         """
-        更新单个Token信息
+        更新单个APIKey信息
         """
         password = request.data.get('password')
 
@@ -605,11 +603,11 @@ class TokenDetailView(APIView):
         if not request.user.check_password(password):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        token = self.get_object(id, request.user)
-        if token is None:
+        apikey = self.get_object(id, request.user)
+        if apikey is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
-        serializer = TokenSerializer(instance=token, data=request.data, partial=True)
+        serializer = APIKeySerializer(instance=apikey, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -619,7 +617,7 @@ class TokenDetailView(APIView):
     @is_teacher_or_administrator
     def delete(self, request, id, *args, **kwargs):
         """
-        根据URL中id删除单个Token
+        根据URL中id删除单个APIKey
         """
 
         password = request.data.get('password')
@@ -629,11 +627,11 @@ class TokenDetailView(APIView):
         if not request.user.check_password(password):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        token = self.get_object(id, request.user)
-        if token is None:
+        apikey = self.get_object(id, request.user)
+        if apikey is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
-        token.delete()
+        apikey.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -859,14 +857,14 @@ class SubmissionView(APIView):
                         
                     if problem.allow_ai == True:
 
-                        selected_token = None
-                        if problem.selected_token:
-                            selected_token = problem.selected_token
+                        selected_key = None
+                        if problem.selected_key:
+                            selected_key = problem.selected_key
                         else:
-                            print("Invalid token issolated with problem")
-                            comment += "Invalid token. Fail to AI review."
+                            print("Invalid API key issolated with problem")
+                            comment += "Invalid API Key. Fail to AI review."
 
-                        if selected_token:
+                        if selected_key:
 
                             # 1. 构建 system_content (messages)
                             system_content = "假如你是一名经验丰富的大学计算机教授，你需要慢慢地、仔细地为一道作业给出评分。下面是这道作业，学生需要阅读以下题面严格按照其中的输入、输出格式编写结构清晰、可读性高的代码，使之在尽可能优秀的时间与空间实现下完成题面要求：" + "\n"
@@ -939,8 +937,8 @@ class SubmissionView(APIView):
 
                             # 4. 构建发送的最终payload
                             payload_for_ai = {
-                                "platform": selected_token.platform,
-                                "token": selected_token.token,
+                                "platform": selected_key.platform,
+                                "api_key": selected_key.api_key,
                                 "messages": messages
                             }
                             
@@ -970,7 +968,7 @@ class SubmissionView(APIView):
                                 problem.ai_histories.create(history = json.dumps({"role": "user", "content": content_answer}))
                                 problem.ai_histories.create(history = json.dumps({"role": "assistant", "content": assistant_reply}))
                             
-                            # print("\n######### ASSI ###############\n" + json_data.get("response"))
+                            print("\n######### ASSI ###############\n", json_data.get("response"))
 
                             s_match_obj = re.search(r"S:\s*(\d+)", assistant_reply)
                             i_match_obj = re.search(r"I:\s*(\d+)", assistant_reply)

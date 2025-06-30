@@ -4,13 +4,13 @@ import { NCard, NForm, NFormItem, NInput, NButton, NSpace, useMessage, NTabs, NT
 import type { DataTableColumns } from 'naive-ui';
 import { fetchGetUserInfo, changeUserPwd } from '@/service/api/auth';
 import { useAuthStore } from '@/store/modules/auth';
-import { getTokens, addToken, updateToken, deleteToken } from '@/service/api';
+import { getAPIKeys, addAPIKey, updateAPIKey, deleteAPIKey } from '@/service/api';
 
-type Token = {
+type APIKey = {
     id: number;
     platform: string;
     name: string;
-    token_display: string;
+    key_display: string;
     created_time: string;
 };
 
@@ -64,108 +64,108 @@ async function handlePasswordChange() {
     }
 }
 
-const tokenList = ref<Token[]>([]);
-const tokenTableLoading = ref(false);
-const addTokenForm = reactive({ platform: '', name: '', token: '' });
+const apikeyList = ref<APIKey[]>([]);
+const apikeyTableLoading = ref(false);
+const addAPIKeyForm = reactive({ platform: '', name: '', api_key: '' });
 
-async function fetchTokenList() {
+async function fetchAPIKeyList() {
     if (!isAdminOrTeacher.value) return;
-    tokenTableLoading.value = true;
-    const { data, error } = await getTokens();
+    apikeyTableLoading.value = true;
+    const { data, error } = await getAPIKeys();
     if (!error && data) {
-        tokenList.value = data;
+        apikeyList.value = data;
     }
-    tokenTableLoading.value = false;
+    apikeyTableLoading.value = false;
 }
 
-async function handleAddNewToken() {
-    if (!addTokenForm.platform || !addTokenForm.name || !addTokenForm.token) {
-        message.error('Name, token, and platform should not be empty.');
+async function handleAddNewAPIKey() {
+    if (!addAPIKeyForm.platform || !addAPIKeyForm.name || !addAPIKeyForm.api_key) {
+        message.error('Name, APIKey, and platform should not be empty.');
         return;
     }
 
-    const { error } = await addToken({ ...addTokenForm });
+    const { error } = await addAPIKey({ ...addAPIKeyForm });
     if (!error) {
-        message.success('New token added successfully.');
-        addTokenForm.platform = '';
-        addTokenForm.name = '';
-        addTokenForm.token = '';
-        fetchTokenList();
+        message.success('New API key added successfully.');
+        addAPIKeyForm.platform = '';
+        addAPIKeyForm.name = '';
+        addAPIKeyForm.api_key = '';
+        fetchAPIKeyList();
     }
     else {
-        message.error('Failed to add new token.');
+        message.error('Failed to add new API key.');
     }
 }
 
 const showEditDrawer = ref(false);
-const editingToken = ref<Token | null>(null);
-const editTokenForm = reactive({
+const editingAPIKey = ref<APIKey | null>(null);
+const editAPIKeyForm = reactive({
     password: '',
-    token: '',
+    api_key: '',
     name: '',
     platform: ''
 });
 
-function openEditDrawer(token: Token) {
-  editingToken.value = token;
-  editTokenForm.password = '';
-  editTokenForm.token = '';
-  editTokenForm.name = token.name;
-  editTokenForm.platform = token.platform;
+function openEditDrawer(apikey: APIKey) {
+  editingAPIKey.value = apikey;
+  editAPIKeyForm.password = '';
+  editAPIKeyForm.api_key = '';
+  editAPIKeyForm.name = apikey.name;
+  editAPIKeyForm.platform = apikey.platform;
   showEditDrawer.value = true;
 }
 
-async function handleUpdateToken() {
-  if (!editingToken.value || !editTokenForm.password) {
+async function handleUpdateAPIKey() {
+  if (!editingAPIKey.value || !editAPIKeyForm.password) {
     message.error('Password should not be empty.');
     return;
   }
 
-  const payload: { id: number; password: string; name?: string; platform?: string; token?: string } = {
-    id: editingToken.value.id,
-    password: editTokenForm.password,
-    name: editTokenForm.name,
-    platform: editTokenForm.platform
+  const payload: { id: number; password: string; name?: string; platform?: string; api_key?: string } = {
+    id: editingAPIKey.value.id,
+    password: editAPIKeyForm.password,
+    name: editAPIKeyForm.name,
+    platform: editAPIKeyForm.platform
   }
 
-  if (editTokenForm.token && editTokenForm.token.trim() !== '') {
-    payload.token = editTokenForm.token;
+  if (editAPIKeyForm.api_key && editAPIKeyForm.api_key.trim() !== '') {
+    payload.api_key = editAPIKeyForm.api_key;
   }
 
-  const { error } = await updateToken(payload);
+  const { error } = await updateAPIKey(payload);
 
   if (!error) {
-    message.success('Token updated successfully.');
+    message.success('API key updated successfully.');
     showEditDrawer.value = false;
-    fetchTokenList();
+    fetchAPIKeyList();
   }
   else {
     message.error('Failed to update. Please check the password.');
   }
 }
 
-async function handleDeleteToken() {
-  if (!editingToken.value || !editTokenForm.password) {
-    message.error('You need to enter your password to delete the token.');
+async function handleDeleteAPIKey() {
+  if (!editingAPIKey.value || !editAPIKeyForm.password) {
+    message.error('You need to enter your password to delete the API key.');
     return;
   }
-  const { error } = await deleteToken({
-    id: editingToken.value.id,
-    password: editTokenForm.password
+  const { error } = await deleteAPIKey({
+    id: editingAPIKey.value.id,
+    password: editAPIKeyForm.password
   });
 
   if (!error) {
-    message.success('Token deleted successfully.');
+    message.success('API key deleted successfully.');
     showEditDrawer.value = false;
-    fetchTokenList();
+    fetchAPIKeyList();
   } else {
     message.error('Failed to delete. Please check the password.');
   }
 }
 
-const createTokenTableColumns = (): DataTableColumns<Token> => [
+const createAPIKeyTableColumns = (): DataTableColumns<APIKey> => [
   { title: 'Name', key: 'name' },
-  { title: 'Token', key: 'token_display' },
+  { title: 'API Key', key: 'key_display' },
   { title: 'Platform', key: 'platform' },
   { title: 'Created Time', key: 'created_time' },
   {
@@ -180,7 +180,7 @@ const createTokenTableColumns = (): DataTableColumns<Token> => [
     }
   }
 ];
-const tokenTableColumns = createTokenTableColumns();
+const apikeyTableColumns = createAPIKeyTableColumns();
 
 onMounted(() => {
   if (authStore.userInfo) {
@@ -188,7 +188,7 @@ onMounted(() => {
     displayInfo.value.first_name = authStore.userInfo.first_name;
   }
   if (isAdminOrTeacher.value) {
-    fetchTokenList();
+    fetchAPIKeyList();
   }
 });
 
@@ -249,27 +249,27 @@ onMounted(() => {
           </NForm>
         </NTabPane>
 
-        <NTabPane v-if="isAdminOrTeacher" name="tokens" tab="API Token Management">
+        <NTabPane v-if="isAdminOrTeacher" name="apikeys" tab="API Key Management">
           <NSpace vertical class="mt-4">
             <NDataTable
-              :columns="tokenTableColumns"
-              :data="tokenList"
-              :loading="tokenTableLoading"
+              :columns="apikeyTableColumns"
+              :data="apikeyList"
+              :loading="apikeyTableLoading"
               :bordered="false"
               :single-line="false"
             />
-            <NForm :model="addTokenForm" :show-label="false" layout="inline" class="mt-4 p-4 border rounded">
+            <NForm :model="addAPIKeyForm" :show-label="false" layout="inline" class="mt-4 p-4 border rounded">
               <NFormItem path="name" class="flex-1">
-                <NInput v-model:value="addTokenForm.name" placeholder="Custom Name (e.g., My Backup Key)" />
+                <NInput v-model:value="addAPIKeyForm.name" placeholder="Custom Name (e.g., My Backup Key)" />
               </NFormItem>
               <NFormItem path="platform" class="flex-1">
-                <NSelect v-model:value="addTokenForm.platform" :options="platformOptions" placeholder="Please select a platform" />
+                <NSelect v-model:value="addAPIKeyForm.platform" :options="platformOptions" placeholder="Please select a platform" />
               </NFormItem>
-              <NFormItem path="token" class="flex-2">
-                <NInput v-model:value="addTokenForm.token" type="password" show-password-on="mousedown" placeholder="Paste your API Key here" />
+              <NFormItem path="api_key" class="flex-2">
+                <NInput v-model:value="addAPIKeyForm.api_key" type="password" show-password-on="mousedown" placeholder="Paste your API Key here" />
               </NFormItem>
               <NFormItem>
-                <NButton type="primary" @click="handleAddNewToken">Add New Token</NButton>
+                <NButton type="primary" @click="handleAddNewAPIKey">Add New API Key</NButton>
               </NFormItem>
             </NForm>
           </NSpace>
@@ -278,11 +278,11 @@ onMounted(() => {
     </NCard>
 
     <NDrawer v-model:show="showEditDrawer" :width="'50%'" placement="right">
-      <NDrawerContent :title="`Edit Token: ${editingToken?.name}`" closable>
-        <NForm :model="editTokenForm" label-placement="top">
+      <NDrawerContent :title="`Edit API Key: ${editingAPIKey?.name}`" closable>
+        <NForm :model="editAPIKeyForm" label-placement="top">
           <NFormItem label="Confirm Your Login Password (Required)">
             <NInput 
-              v-model:value="editTokenForm.password" 
+              v-model:value="editAPIKeyForm.password" 
               type="password" 
               show-password-on="mousedown"
               placeholder="Enter your login password for security verification" 
@@ -290,14 +290,14 @@ onMounted(() => {
           </NFormItem>
           
           <NFormItem label="Custom Name">
-            <NInput v-model:value="editTokenForm.name" placeholder="Give your token an easy-to-recognize name" />
+            <NInput v-model:value="editAPIKeyForm.name" placeholder="Give your API key an easy-to-recognize name" />
           </NFormItem>
           <NFormItem label="Platform">
-            <NSelect v-model:value="editTokenForm.platform" :options="platformOptions" />
+            <NSelect v-model:value="editAPIKeyForm.platform" :options="platformOptions" />
           </NFormItem>
-          <NFormItem label="New Token Value (Enter here if you need to update)">
+          <NFormItem label="New API Key Value (Enter here if you need to update)">
             <NInput 
-              v-model:value="editTokenForm.token" 
+              v-model:value="editAPIKeyForm.api_key"
               type="textarea" 
               :autosize="{minRows: 5, maxRows: 10}" 
               placeholder="Paste the new API Key here" 
@@ -307,14 +307,14 @@ onMounted(() => {
         
         <template #footer>
           <NFlex justify="space-between">
-            <NPopconfirm @positive-click="handleDeleteToken">
+            <NPopconfirm @positive-click="handleDeleteAPIKey">
               <template #trigger>
-                <NButton type="error">Delete This Token</NButton>
+                <NButton type="error">Delete This API Key</NButton>
               </template>
-              After entering your password in the "Confirm Your Login Password" field, clicking this button will permanently delete this token. Are you sure?
+              After entering your password in the "Confirm Your Login Password" field, clicking this button will permanently delete this API key. Are you sure?
             </NPopconfirm>
             
-            <NButton type="primary" @click="handleUpdateToken">Submit Update</NButton>
+            <NButton type="primary" @click="handleUpdateAPIKey">Submit Update</NButton>
           </NFlex>
         </template>
       </NDrawerContent>
